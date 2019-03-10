@@ -20,18 +20,18 @@ val log = object : Loggable {}
 
 @Testable
 object ProcessRunnerTest : Spek({
-    group("Process Runner Tests") {
-        val os by memoized { LoggingAppender(UUID.randomUUID()) }
-        val es by memoized { ErrorLoggingAppender(UUID.randomUUID()) }
-        val hello by memoized {
-            val file = javaClass.getResource("/HelloWorld.pl").file
-            getProcess(file)
-        }
-        val loop5 by memoized {
-            val file = javaClass.getResource("/Loop5.pl").file
-            getProcess(file)
-        }
+    val os by memoized { LoggingAppender(UUID.randomUUID()) }
+    val es by memoized { ErrorLoggingAppender(UUID.randomUUID()) }
+    val hello by memoized {
+        val file = javaClass.getResource("/HelloWorld.pl").file
+        getProcess(file)
+    }
+    val loop5 by memoized {
+        val file = javaClass.getResource("/Loop5.pl").file
+        getProcess(file)
+    }
 
+    group("Completed Jobs") {
         test("Hello World Test") {
             val listener = processListener(ExitCodes.Success)
             val runner = ProcessRunner(hello, listener)
@@ -50,7 +50,8 @@ object ProcessRunnerTest : Spek({
             os.size.should.equal(6)
             log.info { res }
         }
-
+    }
+    group("Stopped jobs") {
         test("Gracefully Stopping Process") {
             val listener = processListener(ExitCodes.SigTerm)
             val runner = ProcessRunner(loop5, listener)
@@ -82,13 +83,14 @@ object ProcessRunnerTest : Spek({
             runner.start()
             val res = runner.future?.get()
             es.size.should.equal(1)
+            es.lines[0].should.equal("Error Message")
             log.info { res }
         }
 
     }
 })
 
-private fun getProcess(file:String): ITasserProcess {
+private fun getProcess(file: String): ITasserProcess {
     return ITasserProcess(
         UUID.randomUUID(),
         listOf("perl", file),
@@ -99,13 +101,14 @@ private fun getProcess(file:String): ITasserProcess {
     )
 }
 
-fun safeWait(millis:Long){
+fun safeWait(millis: Long) {
     val time = System.currentTimeMillis()
-    while(true){
-        if(System.currentTimeMillis() - time > millis)
+    while (true) {
+        if (System.currentTimeMillis() - time > millis)
             break
     }
 }
+
 private fun processListener(exitCode: Int): ProcessListener {
     return listener {
         afterFinish { _, it2 ->
@@ -171,20 +174,22 @@ class TestListener : ProcessListener(), Loggable {
 }
 
 class LoggingAppender(val processId: UUID) : Loggable, LogOutputStream() {
-    private val lines = arrayListOf<String>()
+    val lines = arrayListOf<String>()
     override fun processLine(p0: String) {
         info { "[$processId] processing line [$p0] " }
         lines += p0
     }
+
     val size get() = lines.size
 }
 
 class ErrorLoggingAppender(val processId: UUID) : Loggable, LogOutputStream() {
-    private val lines = arrayListOf<String>()
+    val lines = arrayListOf<String>()
     override fun processLine(p0: String) {
         error { "[$processId] processing line [$p0] " }
         lines += p0
     }
+
     val size get() = lines.size
 
 }
