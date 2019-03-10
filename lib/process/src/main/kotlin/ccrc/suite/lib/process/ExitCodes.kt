@@ -1,4 +1,4 @@
-package ccrc.suite.lib.test
+package ccrc.suite.lib.process
 
 object ExitCodes {
     const val Success = 0

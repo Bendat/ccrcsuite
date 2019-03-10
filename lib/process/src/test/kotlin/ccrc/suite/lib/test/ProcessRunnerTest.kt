@@ -3,6 +3,7 @@
 package ccrc.suite.lib.test
 
 import ccrc.suite.commons.logger.Loggable
+import ccrc.suite.lib.process.ExitCodes
 import ccrc.suite.lib.process.ITasserProcess
 import ccrc.suite.lib.process.PerlProcess
 import ccrc.suite.lib.process.ProcessRunner
