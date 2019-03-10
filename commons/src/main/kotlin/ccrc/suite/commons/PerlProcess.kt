@@ -1,4 +1,4 @@
-package ccrc.suite.lib.process
+package ccrc.suite.commons
 
 import java.util.*
 
@@ -8,7 +8,6 @@ interface PerlProcess {
     val createdAt: Long
     val createdBy: UUID
     var state: ExecutionState
-    val exitCode: Int
 
     enum class ExecutionState {
         Completed,

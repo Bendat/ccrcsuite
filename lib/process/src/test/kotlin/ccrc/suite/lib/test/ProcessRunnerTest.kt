@@ -2,11 +2,13 @@
 
 package ccrc.suite.lib.test
 
+import arrow.core.None
 import ccrc.suite.commons.logger.Loggable
 import ccrc.suite.lib.process.ArgNames.AutoFlush
 import ccrc.suite.lib.process.ExitCodes
 import ccrc.suite.lib.process.ITasserProcess
-import ccrc.suite.lib.process.PerlProcess
+import ccrc.suite.commons.PerlProcess
+import ccrc.suite.commons.utils.safeWait
 import ccrc.suite.lib.process.ProcessRunner
 import com.winterbe.expekt.should
 import org.junit.platform.commons.annotation.Testable
@@ -42,8 +44,11 @@ object ProcessRunnerTest : Spek({
             val runner = ProcessRunner(hello, listener)
                 .outputTo(os).errorTo(es)
             runner.start()
-            val res = runner.future?.get()
-            log.info { res }
+            runner.future.map {
+                val res = it.get()
+                log.info { res }
+            }
+            runner.future.should.not.be.an.instanceof(None::class.java)
         }
 
         test("Waiting for Async Result") {
@@ -51,54 +56,66 @@ object ProcessRunnerTest : Spek({
             val runner = ProcessRunner(loop5, listener)
                 .outputTo(os).errorTo(es)
             runner.start()
-            val res = runner.future?.get()
-            os.size.should.equal(6)
-            log.info { res }
+            runner.future.map {
+                val res = it.get()
+                os.size.should.equal(6)
+                log.info { res }
+            }
+            runner.future.should.not.be.an.instanceof(None::class.java)
         }
     }
-    group("Stopped processes") {
+
+    group("Stopping Processes") {
         test("Gracefully Stopping Process") {
             val listener = processListener(ExitCodes.SigTerm)
             val runner = ProcessRunner(loop5, listener)
                 .outputTo(os).errorTo(es)
+            runner.future.should.be.an.instanceof(None::class.java)
             runner.start()
             safeWait(1500)
             runner.stop()
-            if(autoflush)
+            if (autoflush)
                 os.size.should.equal(2)
             else os.size.should.equal(0)
+            runner.future.should.not.be.an.instanceof(None::class.java)
         }
 
         test("Forcefully Stopping Process") {
             val listener = processListener(ExitCodes.SigKill)
             val runner = ProcessRunner(loop5, listener)
                 .outputTo(os).errorTo(es)
+            runner.future.should.be.an.instanceof(None::class.java)
             runner.start()
             safeWait(1500)
             runner.destroy()
-            val res = runner.future?.get()
-            if(autoflush)
-            os.size.should.equal(2)
-            else os.size.should.equal(0)
-            log.info { res }
+            runner.future.map {
+                val res = it.get()
+                if (autoflush)
+                    os.size.should.equal(2)
+                else os.size.should.equal(0)
+                log.info { res }
+            }
+            runner.future.should.not.be.an.instanceof(None::class.java)
         }
 
     }
 
-    group("Output Streams"){
+    group("Output Streams") {
         test("Printing to STDERR") {
             val file = javaClass.getResource("/Error.pl").file
             val proc = getProcess(file)
             val listener = processListener(ExitCodes.Success)
             val runner = ProcessRunner(proc, listener)
                 .outputTo(os).errorTo(es)
+            runner.future.should.be.an.instanceof(None::class.java)
             runner.start()
-            val res = runner.future?.get()
-            if(autoflush)
-                os.size.should.equal(1)
-            else os.size.should.equal(0)
-            es.lines[0].should.equal("Error Message")
-            log.info { res }
+            runner.future.map {
+                val res = it.get()
+                es.size.should.equal(1)
+                es.lines[0].should.equal("Error Message")
+                log.info { res }
+            }
+            runner.future.should.not.be.an.instanceof(None::class.java)
         }
     }
 })
@@ -115,18 +132,10 @@ private fun getProcess(file: String): ITasserProcess {
         params,
         System.currentTimeMillis(),
         UUID.randomUUID(),
-        PerlProcess.ExecutionState.Queued,
-        0
+        PerlProcess.ExecutionState.Queued
     )
 }
 
-fun safeWait(millis: Long) {
-    val time = System.currentTimeMillis()
-    while (true) {
-        if (System.currentTimeMillis() - time > millis)
-            break
-    }
-}
 
 private fun processListener(exitCode: Int): ProcessListener {
     return listener {

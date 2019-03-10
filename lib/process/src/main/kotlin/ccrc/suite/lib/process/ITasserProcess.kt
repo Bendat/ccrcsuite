@@ -1,5 +1,6 @@
 package ccrc.suite.lib.process
 
+import ccrc.suite.commons.PerlProcess
 import java.util.*
 
 data class ITasserProcess(
@@ -7,6 +8,5 @@ data class ITasserProcess(
     override val args: List<String>,
     override val createdAt: Long,
     override val createdBy: UUID,
-    override var state: PerlProcess.ExecutionState,
-    override val exitCode: Int
+    override var state: PerlProcess.ExecutionState
 ) : PerlProcess
