@@ -4,8 +4,10 @@ import arrow.core.Either
 import arrow.core.None
 import arrow.core.Some
 import ccrc.suite.commons.User
+import ccrc.suite.lib.store.database.DBObject
 import ccrc.suite.lib.store.database.Database
 import ccrc.suite.lib.store.database.Database.PersistentDatabase
+import com.github.javafaker.Faker
 import com.winterbe.expekt.should
 import org.dizitart.kno2.filters.eq
 import org.dizitart.no2.objects.Id
@@ -13,6 +15,8 @@ import org.junit.platform.commons.annotation.Testable
 import org.spekframework.spek2.Spek
 import java.io.File
 import java.util.*
+
+
 @Testable
 class DatabaseTest : Spek({
     val to by memoized { TestObject(UUID.randomUUID(), "Paul Peterson") }
@@ -88,7 +92,7 @@ class DatabaseTest : Spek({
                 repo.t.should.equal(1)
             }
 
-            test("Retrieving TestObject"){
+            test("Retrieving TestObject") {
                 db.insert(to)
                 db.insert(TestObject())
                 db.insert(TestObject())
@@ -106,7 +110,7 @@ class DatabaseTest : Spek({
                 found.b.first().id.should.equal(to.id)
             }
 
-            test("Using ObjectRepository Context"){
+            test("Using ObjectRepository Context") {
                 db.insert(to)
                 db.context<TestObject> {
                     insert(TestObject())
@@ -116,13 +120,52 @@ class DatabaseTest : Spek({
                 size as Some<Long>
                 size.t.should.equal(3)
             }
+
+            test("Updating ObjectRepository item") {
+                db.insert(to)
+                db.context<TestObject> {
+                    insert(TestObject())
+                    insert(TestObject())
+                }
+                val size = db.size<TestObject>()
+                size as Some<Long>
+                size.t.should.equal(3)
+                val newObj = TestObject(to.id)
+                db.update(newObj)
+                val size2 = db.size<TestObject>()
+                size2 as Some<Long>
+                size.t.should.equal(3)
+                val ret = db.read<TestObject> { DBObject::id eq newObj.id }
+                ret as Either.Right
+                ret.b.first().should.equal(newObj)
+                ret.b.first().should.not.equal(to)
+            }
+
+            test("Deleting ObjectRepository item") {
+                db.insert(to)
+                db.context<TestObject> {
+                    insert(TestObject())
+                    insert(TestObject())
+                }
+                val size = db.size<TestObject>()
+                size as Some<Long>
+                size.t.should.equal(3)
+                db.delete(to)
+                val size2 = db.size<TestObject>()
+                size2 as Some
+                size2.t.should.equal(2)
+            }
+
+
         }
     }
 
 })
 
+var faker = Faker()
+
 data class TestObject(
     @Id
-    val id: UUID = UUID.randomUUID(),
-    val name: String = "Secondary Name"
-)
+    override val id: UUID = UUID.randomUUID(),
+    val name: String = faker.name().fullName()
+) : DBObject
