@@ -3,6 +3,7 @@
 package ccrc.suite.lib.test
 
 import ccrc.suite.commons.logger.Loggable
+import ccrc.suite.lib.process.ArgNames.AutoFlush
 import ccrc.suite.lib.process.ExitCodes
 import ccrc.suite.lib.process.ITasserProcess
 import ccrc.suite.lib.process.PerlProcess
@@ -23,6 +24,9 @@ val log = object : Loggable {}
 object ProcessRunnerTest : Spek({
     val os by memoized { LoggingAppender(UUID.randomUUID()) }
     val es by memoized { ErrorLoggingAppender(UUID.randomUUID()) }
+    val autoflush by memoized {
+        System.getProperty("autoflush")?.toBoolean() == true
+    }
     val hello by memoized {
         val file = javaClass.getResource("/HelloWorld.pl").file
         getProcess(file)
@@ -32,7 +36,7 @@ object ProcessRunnerTest : Spek({
         getProcess(file)
     }
 
-    group("Completed Jobs") {
+    group("Creating Processes") {
         test("Hello World Test") {
             val listener = processListener(ExitCodes.Success)
             val runner = ProcessRunner(hello, listener)
@@ -52,7 +56,7 @@ object ProcessRunnerTest : Spek({
             log.info { res }
         }
     }
-    group("Stopped jobs") {
+    group("Stopped processes") {
         test("Gracefully Stopping Process") {
             val listener = processListener(ExitCodes.SigTerm)
             val runner = ProcessRunner(loop5, listener)
@@ -60,7 +64,9 @@ object ProcessRunnerTest : Spek({
             runner.start()
             safeWait(1500)
             runner.stop()
-            os.size.should.equal(2)
+            if(autoflush)
+                os.size.should.equal(2)
+            else os.size.should.equal(0)
         }
 
         test("Forcefully Stopping Process") {
@@ -71,10 +77,15 @@ object ProcessRunnerTest : Spek({
             safeWait(1500)
             runner.destroy()
             val res = runner.future?.get()
+            if(autoflush)
             os.size.should.equal(2)
+            else os.size.should.equal(0)
             log.info { res }
         }
 
+    }
+
+    group("Output Streams"){
         test("Printing to STDERR") {
             val file = javaClass.getResource("/Error.pl").file
             val proc = getProcess(file)
@@ -83,18 +94,25 @@ object ProcessRunnerTest : Spek({
                 .outputTo(os).errorTo(es)
             runner.start()
             val res = runner.future?.get()
-            es.size.should.equal(1)
+            if(autoflush)
+                os.size.should.equal(1)
+            else os.size.should.equal(0)
             es.lines[0].should.equal("Error Message")
             log.info { res }
         }
-
     }
 })
 
+val lg get() = object : Loggable {}
 private fun getProcess(file: String): ITasserProcess {
+    val flush = System.getProperty("autoflush")
+    lg.info { "Flush is [$flush]" }
+    val params = if (flush?.toBoolean() == true)
+        listOf("perl", AutoFlush.toString(), file)
+    else listOf("perl", file)
     return ITasserProcess(
         UUID.randomUUID(),
-        listOf("perl", file),
+        params,
         System.currentTimeMillis(),
         UUID.randomUUID(),
         PerlProcess.ExecutionState.Queued,

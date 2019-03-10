@@ -6,7 +6,7 @@ enum class ArgNames(val value: String) {
             return "Perl()"
         }
     },
-    AutoFLush("MDevel::Autoflush"),
+    AutoFlush("MDevel::Autoflush"),
     LibDir("libdir"),
     PkgDir("pkgdir"),
     SeqName("seqname"),

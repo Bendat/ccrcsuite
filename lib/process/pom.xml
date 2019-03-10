@@ -15,6 +15,9 @@
 
     <name>ccrc.suite.lib process</name>
 
+    <properties>
+        <autoflush>false</autoflush>
+    </properties>
     <repositories>
         <repository>
             <id>spek-dev</id>
