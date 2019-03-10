@@ -1,4 +1,4 @@
-package ccrc.suite.lib.store
+package ccrc.suite.lib.store.database
 
 import arrow.core.*
 import ccrc.suite.commons.User
@@ -9,21 +9,28 @@ import org.dizitart.no2.Nitrite
 import org.dizitart.no2.WriteResult
 import org.dizitart.no2.objects.Cursor
 import org.dizitart.no2.objects.ObjectFilter
+import org.dizitart.no2.objects.ObjectRepository
 import java.io.File
 
 sealed class Database : Loggable {
     abstract val db: Either<DBError, Nitrite>
 
-    inline fun <reified T : Any> size(): Option<Long> {
-        return db.map { it.getRepository<T>().size() }.toOption().also {
-            db.map { i -> i.getRepository<T>().close() }
+    inline fun <reified TRepo : Any> size(): Option<Long> {
+        return db.map { it.getRepository<TRepo>().size() }.toOption().also {
+            db.map { i -> i.getRepository<TRepo>().close() }
         }
     }
 
-    inline fun <reified T : Any> insert(vararg item: T)
+    inline fun <reified TRepo : Any> insert(vararg item: TRepo)
             : Either<DBError, WriteResult> {
-        return db.map { it.getRepository<T>().insert(item) }.also {
-            db.map { i -> i.getRepository<T>().close() }
+        return db.map { it.getRepository<TRepo>().insert(item) }.also {
+            db.map { i -> i.getRepository<TRepo>().close() }
+        }
+    }
+
+    inline fun <reified TRepo : Any> context(op: ObjectRepository<TRepo>.() -> Unit) {
+        db.map { it.getRepository<TRepo>().apply(op) }.also {
+            db.map { i -> i.getRepository<TRepo>().close() }
         }
     }
 

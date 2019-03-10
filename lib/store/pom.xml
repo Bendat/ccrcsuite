@@ -24,6 +24,10 @@
             <id>jcenter</id>
             <url>https://jcenter.bintray.com/</url>
         </repository>
+        <!--<repository>-->
+            <!--<id>jitpack.io</id>-->
+            <!--<url>https://jitpack.io</url>-->
+        <!--</repository>-->
     </repositories>
 
     <dependencies>
@@ -105,6 +109,11 @@
             <version>1.9</version>
             <scope>test</scope>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.github.moove-it</groupId>-->
+            <!--<artifactId>fakeit</artifactId>-->
+            <!--<version>v0.5</version>-->
+        <!--</dependency>-->
     </dependencies>
 
     <build>

@@ -4,17 +4,18 @@ import arrow.core.Either
 import arrow.core.None
 import arrow.core.Some
 import ccrc.suite.commons.User
-import ccrc.suite.lib.store.Database
-import ccrc.suite.lib.store.Database.PersistentDatabase
+import ccrc.suite.lib.store.database.Database
+import ccrc.suite.lib.store.database.Database.PersistentDatabase
 import com.winterbe.expekt.should
 import org.dizitart.kno2.filters.eq
+import org.dizitart.no2.objects.Id
+import org.junit.platform.commons.annotation.Testable
 import org.spekframework.spek2.Spek
 import java.io.File
 import java.util.*
-
+@Testable
 class DatabaseTest : Spek({
     val to by memoized { TestObject(UUID.randomUUID(), "Paul Peterson") }
-
     group("In Memory Database Group") {
         val db by memoized { Database.MemoryDatabase() }
         test("Adding TestObject") {
@@ -24,6 +25,7 @@ class DatabaseTest : Spek({
             repo as Some<Long>
             repo.t.should.equal(1)
         }
+
         test("Retrieving TestObject") {
             db.insert(to)
             val res = db.find<TestObject> { TestObject::id eq to.id }
@@ -40,47 +42,87 @@ class DatabaseTest : Spek({
         val db by memoized { PersistentDatabase(dir, file, user) }
 
         afterEachTest { println(db.deleteDatabase()) }
+        group("Database Actions") {
+            test("Creating Database") {
+                db.db.map {}
+                println(File(dir, file).exists())
+                File(dir, file).exists().should.be.`true`
+                File(dir, file).isFile.should.be.`true`
+            }
 
-        test("Creating Database") {
-            db.insert(to)
-            println(File(dir, file).exists())
-            File(dir, file).exists().should.be.`true`
-            File(dir, file).isFile.should.be.`true`
+            test("Deleting a Database") {
+                val dbfile = File(dir, file)
+                db.db.map {}
+                dbfile.exists().should.be.`true`
+                println { "DB is [$db]" }
+                db.deleteDatabase()
+                dbfile.exists().should.be.`false`
+            }
+
+            test("Closing and Reopening a Database") {
+                val dbfile = File(dir, file)
+                db.db.map {}
+                dbfile.exists().should.be.`true`
+                db.close()
+                val db2 = PersistentDatabase(dir, file, user)
+                (db2.db is Either.Right).should.be.`true`
+            }
+
+            test("Opening a Database with Bad Credentials") {
+                val dbfile = File(dir, file)
+                db.db.map {}
+                dbfile.exists().should.be.`true`
+                db.close()
+                val db2 = PersistentDatabase(dir, file, User("1", "2"))
+                println("Db2 is [${db2.db}]")
+                (db2.db is Either.Left).should.be.`true`
+            }
         }
 
-        test("Deleting a Database") {
-            val dbfile = File(dir, file)
-            db.insert(to)
-            dbfile.exists().should.be.`true`
-            println { "DB is [$db]" }
-            db.deleteDatabase()
-            dbfile.exists().should.be.`false`
-        }
+        group("Crud Operations") {
+            test("Inserting TestObject") {
+                db.insert(to)
+                val repo = db.size<TestObject>()
+                repo.should.not.be.instanceof(None::class.java)
+                repo as Some<Long>
+                repo.t.should.equal(1)
+            }
 
-        test("Closing and Reope" +
-                "ning a Database") {
-            val dbfile = File(dir, file)
-            db.insert(to)
-            dbfile.exists().should.be.`true`
-            db.close()
-            val db2 = PersistentDatabase(dir, file, user)
-            (db2.db is Either.Right).should.be.`true`
-        }
+            test("Retrieving TestObject"){
+                db.insert(to)
+                db.insert(TestObject())
+                db.insert(TestObject())
+                db.insert(TestObject())
 
-        test("Opening a Database with Bad Credentials") {
-            val dbfile = File(dir, file)
-            db.insert(to)
-            dbfile.exists().should.be.`true`
-            db.close()
-            val db2 = PersistentDatabase(dir, file, User("1", "2"))
-            println("Db2 is [${db2.db}]")
-            (db2.db is Either.Left).should.be.`true`
-        }
+                val repo = db.size<TestObject>()
+                repo.should.not.be.instanceof(None::class.java)
+                repo as Some<Long>
+                repo.t.should.equal(4)
+                val found = db.find<TestObject> {
+                    TestObject::id eq to.id
+                }
+                found as Either.Right
+                found.b.size().should.equal(1)
+                found.b.first().id.should.equal(to.id)
+            }
 
+            test("Using ObjectRepository Context"){
+                db.insert(to)
+                db.context<TestObject> {
+                    insert(TestObject())
+                    insert(TestObject())
+                }
+                val size = db.size<TestObject>()
+                size as Some<Long>
+                size.t.should.equal(3)
+            }
+        }
     }
+
 })
 
 data class TestObject(
-    val id: UUID,
-    val name: String
+    @Id
+    val id: UUID = UUID.randomUUID(),
+    val name: String = "Secondary Name"
 )
