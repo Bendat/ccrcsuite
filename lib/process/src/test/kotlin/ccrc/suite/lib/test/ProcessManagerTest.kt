@@ -126,6 +126,7 @@ class ProcessManagerTest : Spek({
             found2 as Some
             found2.map { it.state.should.equal(Completed) }
         }
+        
         test("Waiting for Process Synchronously") {
             val file = javaClass.getResource("/HelloWorld.pl").file
             val id = pm.new(0, File(file), "Test Process 1", args(), uuid)
