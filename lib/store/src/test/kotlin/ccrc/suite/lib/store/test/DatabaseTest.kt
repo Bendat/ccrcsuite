@@ -46,6 +46,7 @@ class DatabaseTest : Spek({
         val db by memoized { PersistentDatabase(dir, file, user) }
 
         afterEachTest { println(db.deleteDatabase()) }
+
         group("Database Actions") {
             test("Creating Database") {
                 db.db.map {}
@@ -155,8 +156,6 @@ class DatabaseTest : Spek({
                 size2 as Some
                 size2.t.should.equal(2)
             }
-
-
         }
     }
 
@@ -165,7 +164,6 @@ class DatabaseTest : Spek({
 var faker = Faker()
 
 data class TestObject(
-    @Id
-    override val id: UUID = UUID.randomUUID(),
+    @Id override val id: UUID = UUID.randomUUID(),
     val name: String = faker.name().fullName()
 ) : DBObject

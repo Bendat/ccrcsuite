@@ -52,6 +52,7 @@ sealed class Database : Loggable {
     inline fun <reified TRepo : DBObject> delete(obj: TRepo){
         db.map { it.getRepository<TRepo>().remove(DBObject::id eq obj.id) }
     }
+
     inline fun <reified T : Any> find(filter: () -> ObjectFilter)
             : Either<DBError, Cursor<T>> {
         return db.map { it.getRepository<T>().find(filter()) }.also {
@@ -103,7 +104,7 @@ sealed class Database : Loggable {
         private val dbFile = File(directory, name)
         override val db = initAsEither {
             directory.mkdirs()
-            nitrite(user.email, user.password) {
+            nitrite(user.username, user.password) {
                 file = File(directory, name)
                 autoCommitBufferSize = 2048
                 compress = true

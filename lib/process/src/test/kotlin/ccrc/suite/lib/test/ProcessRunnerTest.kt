@@ -3,12 +3,12 @@
 package ccrc.suite.lib.test
 
 import arrow.core.None
+import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.logger.Loggable
+import ccrc.suite.commons.utils.safeWait
 import ccrc.suite.lib.process.ArgNames.AutoFlush
 import ccrc.suite.lib.process.ExitCodes
 import ccrc.suite.lib.process.ITasserProcess
-import ccrc.suite.commons.PerlProcess
-import ccrc.suite.commons.utils.safeWait
 import ccrc.suite.lib.process.ProcessRunner
 import com.winterbe.expekt.should
 import org.junit.platform.commons.annotation.Testable
@@ -17,6 +17,7 @@ import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
 import org.zeroturnaround.exec.listener.ProcessListener
 import org.zeroturnaround.exec.stream.LogOutputStream
+import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -27,7 +28,7 @@ object ProcessRunnerTest : Spek({
     val os by memoized { LoggingAppender(UUID.randomUUID()) }
     val es by memoized { ErrorLoggingAppender(UUID.randomUUID()) }
     val autoflush by memoized {
-        System.getProperty("autoflush")?.toBoolean() == true
+        true
     }
     val hello by memoized {
         val file = javaClass.getResource("/HelloWorld.pl").file
@@ -74,9 +75,7 @@ object ProcessRunnerTest : Spek({
             runner.start()
             safeWait(1500)
             runner.stop()
-            if (autoflush)
-                os.size.should.equal(2)
-            else os.size.should.equal(0)
+            os.size.should.equal(2)
             runner.future.should.not.be.an.instanceof(None::class.java)
         }
 
@@ -90,9 +89,7 @@ object ProcessRunnerTest : Spek({
             runner.destroy()
             runner.future.map {
                 val res = it.get()
-                if (autoflush)
-                    os.size.should.equal(2)
-                else os.size.should.equal(0)
+                os.size.should.equal(2)
                 log.info { res }
             }
             runner.future.should.not.be.an.instanceof(None::class.java)
@@ -129,6 +126,8 @@ private fun getProcess(file: String): ITasserProcess {
     else listOf("perl", file)
     return ITasserProcess(
         UUID.randomUUID(),
+        File(""),
+        "Test Program",
         params,
         System.currentTimeMillis(),
         UUID.randomUUID(),

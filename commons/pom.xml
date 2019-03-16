@@ -64,6 +64,12 @@
             <artifactId>potassium-nitrite</artifactId>
             <version>3.2.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>io.arrow-kt</groupId>
+            <artifactId>arrow-core</artifactId>
+            <version>0.7.2</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
