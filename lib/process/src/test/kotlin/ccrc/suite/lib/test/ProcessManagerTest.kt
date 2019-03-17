@@ -19,9 +19,6 @@ import java.util.UUID.randomUUID
 class ProcessManagerTest : Spek({
     val pm by memoized { ProcessManager() }
     group("Units") {
-        test("Finding Queue for Process") {
-
-        }
 
         test("Verifying Accurate Size") {
             val id = pm.new(0, File(""), "Test Process 1", listOf(), uuid)
@@ -126,7 +123,7 @@ class ProcessManagerTest : Spek({
             found2 as Some
             found2.map { it.state.should.equal(Completed) }
         }
-        
+
         test("Waiting for Process Synchronously") {
             val file = javaClass.getResource("/HelloWorld.pl").file
             val id = pm.new(0, File(file), "Test Process 1", args(), uuid)

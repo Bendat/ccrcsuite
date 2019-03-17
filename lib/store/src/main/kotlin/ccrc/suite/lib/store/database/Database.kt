@@ -49,7 +49,7 @@ sealed class Database : Loggable {
         }
     }
 
-    inline fun <reified TRepo : DBObject> delete(obj: TRepo){
+    inline fun <reified TRepo : DBObject> delete(obj: TRepo) {
         db.map { it.getRepository<TRepo>().remove(DBObject::id eq obj.id) }
     }
 
@@ -57,6 +57,14 @@ sealed class Database : Loggable {
             : Either<DBError, Cursor<T>> {
         return db.map { it.getRepository<T>().find(filter()) }.also {
             db.map { i -> i.getRepository<T>().close() }
+        }
+    }
+
+    inline fun <reified T : Any> findFirst(): Option<T> {
+        val db = db
+        return when (db) {
+            is Either.Right -> db.b.getRepository<T>().find().firstOrNull().toOption()
+            is Either.Left -> None
         }
     }
 

@@ -5,7 +5,17 @@ import org.apache.commons.text.WordUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.Thread.currentThread
+import kotlin.reflect.KClass
+
+inline fun <reified T> klog() = KLog(T::class)
+
+class KLog(val caller: KClass<*>) : Loggable {
+    override val klog get() = LoggerFactory.getLogger(caller.java)
+
+    constructor(caller: Any) : this(caller::class)
+}
 typealias LogLevel = (String) -> Unit
+
 interface Loggable {
     @get:JsonIgnore
     val klog: Logger

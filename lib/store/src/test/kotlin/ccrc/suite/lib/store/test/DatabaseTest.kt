@@ -85,7 +85,7 @@ class DatabaseTest : Spek({
         }
 
         group("Crud Operations") {
-            test("Inserting TestObject") {
+            test("Creating TestObject") {
                 db.insert(to)
                 val repo = db.size<TestObject>()
                 repo.should.not.be.instanceof(None::class.java)
@@ -93,7 +93,7 @@ class DatabaseTest : Spek({
                 repo.t.should.equal(1)
             }
 
-            test("Retrieving TestObject") {
+            test("Reading TestObject") {
                 db.insert(to)
                 db.insert(TestObject())
                 db.insert(TestObject())
@@ -103,24 +103,12 @@ class DatabaseTest : Spek({
                 repo.should.not.be.instanceof(None::class.java)
                 repo as Some<Long>
                 repo.t.should.equal(4)
-                val found = db.find<TestObject> {
-                    TestObject::id eq to.id
-                }
+                val found = db.find<TestObject> { TestObject::id eq to.id }
                 found as Either.Right
                 found.b.size().should.equal(1)
                 found.b.first().id.should.equal(to.id)
             }
 
-            test("Using ObjectRepository Context") {
-                db.insert(to)
-                db.context<TestObject> {
-                    insert(TestObject())
-                    insert(TestObject())
-                }
-                val size = db.size<TestObject>()
-                size as Some<Long>
-                size.t.should.equal(3)
-            }
 
             test("Updating ObjectRepository item") {
                 db.insert(to)
@@ -155,6 +143,17 @@ class DatabaseTest : Spek({
                 val size2 = db.size<TestObject>()
                 size2 as Some
                 size2.t.should.equal(2)
+            }
+
+            test("Using ObjectRepository Context") {
+                db.insert(to)
+                db.context<TestObject> {
+                    insert(TestObject())
+                    insert(TestObject())
+                }
+                val size = db.size<TestObject>()
+                size as Some<Long>
+                size.t.should.equal(3)
             }
         }
     }

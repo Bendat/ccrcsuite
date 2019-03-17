@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package ccrc.suite.lib.process
 
 import arrow.core.Option
@@ -7,8 +9,12 @@ import ccrc.suite.commons.PerlProcess.ExecutionState
 import ccrc.suite.commons.PerlProcess.ExecutionState.*
 import ccrc.suite.commons.logger.Loggable
 import ccrc.suite.commons.utils.uuid
+import ccrc.suite.lib.store.database.DBObject
 import javafx.beans.property.SimpleListProperty
 import javafx.collections.FXCollections
+import org.dizitart.no2.Document
+import org.dizitart.no2.mapper.Mappable
+import org.dizitart.no2.mapper.NitriteMapper
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
 import org.zeroturnaround.exec.listener.ProcessListener
@@ -19,20 +25,41 @@ import java.util.*
 typealias NewValue = Wrapper
 typealias OldValue = Wrapper
 
-class ProcessManager : Loggable {
-    val queues: MutableMap<ExecutionState, ProcessQueue> =
+class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObject {
+
+
+    private var _queues: MutableMap<ExecutionState, ProcessQueue> =
         mutableMapOf(
             Completed to ProcessQueue(),
             Paused to ProcessQueue(),
-            Running to ProcessQueue { it.runner.start() },
+            Running to ProcessQueue(),
             Failed to ProcessQueue(),
             Queued to ProcessQueue()
         )
-
+    val queues get() = _queues
     val size get() = queues.map { it.value.size }.sum()
     val next get() = queues[Queued]!!.first
     val running get() = queues[Running]?.size ?: 0
     var max = 3
+
+    override fun write(p0: NitriteMapper?) = Document().apply {
+        put("queues", queues)
+        put("max", max)
+    }
+
+
+    override fun read(p0: NitriteMapper?, p1: Document?) {
+        p1?.let {
+            val queues = it.get("queues") as LinkedHashMap<*, *>
+            val cq = queues.mapKeys { k -> k.key as ExecutionState }
+                .mapValues { k -> k.value as ProcessQueue }.toMutableMap()
+            info { "Nitrite map is [${cq[Queued]}]" }
+            info{cq.map { k->k.value::class }}
+            val max = it.get("max") as Int
+            _queues = cq
+            this.max = max
+        }
+    }
 
     fun new(
         priority: Int,
