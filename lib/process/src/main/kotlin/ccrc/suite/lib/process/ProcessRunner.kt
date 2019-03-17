@@ -2,11 +2,12 @@ package ccrc.suite.lib.process
 
 import arrow.core.None
 import arrow.core.Option
+import arrow.core.Try
 import arrow.core.some
+import ccrc.suite.commons.ErrorHandler
 import ccrc.suite.commons.PerlProcess
+import ccrc.suite.commons.TrackingList
 import ccrc.suite.commons.logger.Loggable
-import javafx.beans.property.SimpleListProperty
-import javafx.collections.FXCollections
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
 import org.zeroturnaround.exec.StartedProcess
@@ -17,25 +18,29 @@ import org.zeroturnaround.process.ProcessUtil.destroyGracefullyAndWait
 import org.zeroturnaround.process.Processes
 import org.zeroturnaround.process.SystemProcess
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
 
 @Suppress("UNUSED_EXPRESSION")
 class ProcessRunner(
     val process: PerlProcess,
     listener: ProcessListener
-) : Loggable {
+) : Loggable, ErrorHandler<ProcessError> {
+    override val errors = TrackingList<ProcessError>()
+
     val state get() = process.state
     val isRunnable get() = process.state.isRunnable
 
     var future: Option<Future<ProcessResult>> = None
-    val output = SimpleListProperty<String>(FXCollections.observableArrayList())
-    val errors = SimpleListProperty<String>(FXCollections.observableArrayList())
 
+    private val std = STD()
     private val processExecutor: ProcessExecutor = ProcessExecutor()
         .command(process.args).readOutput(true).addListener(listener)
     private var realProcess: Option<StartedProcess> = None
     private var sysProcess: Option<SystemProcess> = None
+
     fun start(): ProcessRunner {
+        if (!isRunnable) return this
         realProcess = processExecutor.start().some()
         realProcess.map {
             sysProcess = Processes.newStandardProcess(it.process).some()
@@ -46,26 +51,35 @@ class ProcessRunner(
     }
 
     init {
-        outputTo(ProcessLogAppender(output))
-        errorTo(ProcessLogAppender(errors))
+        outputTo(ProcessLogAppender(std.output))
+        errorTo(ProcessLogAppender(std.err))
     }
 
-    fun await() {
-        realProcess.map { it.future.get() }
+    fun await(): Option<ProcessResult> = realProcess.flatMap { p ->
+        Try { p.future.get() }.toEither()
+            .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
+            .toOption()
     }
 
-    fun await(timeout: Long) {
-        sysProcess.map { it.waitFor(timeout, SECONDS) }
+
+    fun await(timeout: Long): Option<ProcessResult> = realProcess.flatMap { p ->
+        Try { p.future.get(timeout, MILLISECONDS) }.toEither()
+            .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
+            .toOption()
     }
 
-    fun stop(): ProcessRunner {
-        sysProcess.map { destroyGracefullyAndWait(it, 10, SECONDS) }
-        return this
+
+    fun stop(): Option<ProcessRunner> = sysProcess.flatMap { p ->
+        Try { destroyGracefullyAndWait(p, 10, SECONDS) }.toEither()
+            .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
+            .map { this }.toOption()
     }
 
-    fun destroy(): ProcessRunner {
-        sysProcess.map { destroyForcefullyAndWait(it) }
-        return this
+
+    fun destroy(): Option<ProcessRunner> = sysProcess.flatMap { p ->
+        Try { destroyForcefullyAndWait(p) }.toEither()
+            .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
+            .map { this }.toOption()
     }
 
     fun outputTo(stream: LogOutputStream): ProcessRunner {
@@ -97,12 +111,17 @@ class ProcessRunner(
         return process.hashCode()
     }
 
-    inner class ProcessLogAppender(val list: MutableList<String>) : LogOutputStream(), Loggable {
+    inner class ProcessLogAppender(val list: TrackingList<String>) : LogOutputStream(), Loggable {
         override fun processLine(p0: String) {
             info { "Logging line [$p0] for runner [${process.name}][${process.id}]" }
             list += p0
         }
 
+    }
+
+    inner class STD {
+        val output = TrackingList<String>()
+        val err = TrackingList<String>()
     }
 }
 

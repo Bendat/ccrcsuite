@@ -33,7 +33,7 @@ class DatabaseTest : Spek({
         test("Retrieving TestObject") {
             db.insert(to)
             val res = db.find<TestObject> { TestObject::id eq to.id }
-            (res is Either.Left).should.be.`false`
+            (res is None).should.be.`false`
             res.map { it.first().id.should.equal(to.id) }
         }
     }
@@ -70,7 +70,7 @@ class DatabaseTest : Spek({
                 dbfile.exists().should.be.`true`
                 db.close()
                 val db2 = PersistentDatabase(dir, file, user)
-                (db2.db is Either.Right).should.be.`true`
+                (db2.db is  Some).should.be.`true`
             }
 
             test("Opening a Database with Bad Credentials") {
@@ -80,7 +80,7 @@ class DatabaseTest : Spek({
                 db.close()
                 val db2 = PersistentDatabase(dir, file, User("1", "2"))
                 println("Db2 is [${db2.db}]")
-                (db2.db is Either.Left).should.be.`true`
+                (db2.db is None).should.be.`true`
             }
         }
 
@@ -104,9 +104,9 @@ class DatabaseTest : Spek({
                 repo as Some<Long>
                 repo.t.should.equal(4)
                 val found = db.find<TestObject> { TestObject::id eq to.id }
-                found as Either.Right
-                found.b.size().should.equal(1)
-                found.b.first().id.should.equal(to.id)
+                found as Some
+                found.t.size().should.equal(1)
+                found.t.first().id.should.equal(to.id)
             }
 
 
@@ -125,9 +125,9 @@ class DatabaseTest : Spek({
                 size2 as Some<Long>
                 size.t.should.equal(3)
                 val ret = db.read<TestObject> { DBObject::id eq newObj.id }
-                ret as Either.Right
-                ret.b.first().should.equal(newObj)
-                ret.b.first().should.not.equal(to)
+                ret as Some
+                ret.t.first().should.equal(newObj)
+                ret.t.first().should.not.equal(to)
             }
 
             test("Deleting ObjectRepository item") {

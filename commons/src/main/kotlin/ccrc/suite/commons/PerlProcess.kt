@@ -27,7 +27,7 @@ interface PerlProcess {
     enum class ExitCode(val code: Int, val state: ExecutionState) : Loggable{
         OK(0, ExecutionState.Completed),
         CtrlC(130, ExecutionState.Paused),
-        SigTerm(15, ExecutionState.Paused),
+        SigTerm(143, ExecutionState.Paused),
         SigKill(9, ExecutionState.Paused),
         Error(1, ExecutionState.Failed);
 

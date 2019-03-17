@@ -4,6 +4,7 @@ package ccrc.suite.lib.process
 
 import arrow.core.Option
 import arrow.core.toOption
+import ccrc.suite.commons.ErrorHandler
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.PerlProcess.ExecutionState
 import ccrc.suite.commons.PerlProcess.ExecutionState.*
@@ -26,16 +27,15 @@ typealias NewValue = Wrapper
 typealias OldValue = Wrapper
 
 class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObject {
-
-
     private var _queues: MutableMap<ExecutionState, ProcessQueue> =
         mutableMapOf(
             Completed to ProcessQueue(),
             Paused to ProcessQueue(),
-            Running to ProcessQueue(),
+            Running to ProcessQueue { it.runner.start() },
             Failed to ProcessQueue(),
             Queued to ProcessQueue()
         )
+
     val queues get() = _queues
     val size get() = queues.map { it.value.size }.sum()
     val next get() = queues[Queued]!!.first
@@ -54,7 +54,7 @@ class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObjec
             val cq = queues.mapKeys { k -> k.key as ExecutionState }
                 .mapValues { k -> k.value as ProcessQueue }.toMutableMap()
             info { "Nitrite map is [${cq[Queued]}]" }
-            info{cq.map { k->k.value::class }}
+            info { cq.map { k -> k.value::class } }
             val max = it.get("max") as Int
             _queues = cq
             this.max = max
@@ -90,12 +90,11 @@ class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObjec
             .toOption()
     }
 
-    fun run(processId: UUID) {
+    fun run(processId: UUID): Option<ProcessRunner> =
         queues.map { entry -> entry.value.firstOrNull { it.runner.process.id == processId } }
-            .map { it?.runner?.start() }
-    }
+            .map { it?.runner?.start() }.firstOrNull().toOption()
 
-    operator fun set(priority: Int, state: ExecutionState, process: ProcessRunner) {
+    internal operator fun set(priority: Int, state: ExecutionState, process: ProcessRunner) {
         queues.map { e -> e.value.removeIf { it.runner.process.id == process.process.id } }
         if (state == Running && queues[state]!!.size >= max)
             queues[Queued]!! += Wrapper(process, priority, Queued)
@@ -106,14 +105,10 @@ class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObjec
         find(processId).map { it.runner.await() }
     }
 
-    operator fun get(queue: ExecutionState, priority: Int): List<ProcessRunner> {
-        return queues[queue]?.filter { it.priority == priority }
-            ?.map { it.runner } ?: listOf()
-    }
+    operator fun get(queue: ExecutionState, priority: Int): List<ProcessRunner> =
+        queues[queue]?.filter { it.priority == priority }?.map { it.runner } ?: listOf()
 
-    operator fun get(queue: ExecutionState): ProcessQueue {
-        return queues[queue]!!
-    }
+    operator fun get(queue: ExecutionState): ProcessQueue = queues[queue]!!
 
     operator fun get(queue: ExecutionState, process: ProcessRunner) =
         queues[queue]?.first { it.runner == process }.toOption()

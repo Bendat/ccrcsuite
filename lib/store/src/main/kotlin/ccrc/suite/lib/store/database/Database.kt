@@ -1,7 +1,10 @@
 package ccrc.suite.lib.store.database
 
 import arrow.core.*
+import ccrc.suite.commons.ErrorHandler
+import ccrc.suite.commons.TrackingList
 import ccrc.suite.commons.User
+import ccrc.suite.commons.extensions.ifLeft
 import ccrc.suite.commons.logger.Loggable
 import org.dizitart.kno2.filters.eq
 import org.dizitart.kno2.getRepository
@@ -18,23 +21,23 @@ interface DBObject {
     val id: UUID
 }
 
-sealed class Database : Loggable {
+sealed class Database : Loggable, ErrorHandler<DBError> {
+    abstract val db: Option<Nitrite>
 
-    abstract val db: Either<DBError, Nitrite>
+    override val errors = TrackingList<DBError>()
 
     abstract fun init(): Database
-    abstract fun deleteDatabase(): Either<DbException, Boolean>
-    abstract fun exists(): Either<DbException, Boolean>
+    abstract fun deleteDatabase(): Option<Boolean>
+    abstract fun exists(): Option<Boolean>
 
     inline fun <reified TRepo : DBObject> create(vararg item: TRepo) = insert(*item)
     inline fun <reified TRepo : DBObject> read(filter: () -> ObjectFilter) = find<TRepo>(filter)
 
-    inline fun <reified TRepo : Any> size() =
-        db.map { it.getRepository<TRepo>().size() }.toOption()
+    inline fun <reified TRepo : Any> size(): Option<Long> =
+        db.map { it.getRepository<TRepo>().size() }
             .also { db.map { i -> i.getRepository<TRepo>().close() } }
 
-    inline fun <reified TRepo : DBObject> insert(vararg item: TRepo)
-            : Either<DBError, WriteResult> {
+    inline fun <reified TRepo : DBObject> insert(vararg item: TRepo): Option<WriteResult> {
         return db.map { it.getRepository<TRepo>().insert(item) }.also {
             db.map { i -> i.getRepository<TRepo>().close() }
         }
@@ -46,18 +49,15 @@ sealed class Database : Loggable {
         }
     }
 
-    inline fun <reified TRepo : DBObject> update(obj: TRepo): Either<DBError, WriteResult> {
-        return db.map {
-            it.getRepository<TRepo>().update(DBObject::id eq obj.id, obj)
-        }
+    inline fun <reified TRepo : DBObject> update(obj: TRepo): Option<WriteResult> {
+        return db.map { it.getRepository<TRepo>().update(DBObject::id eq obj.id, obj) }
     }
 
-    inline fun <reified TRepo : DBObject> delete(obj: TRepo) {
-        db.map { it.getRepository<TRepo>().remove(DBObject::id eq obj.id) }
+    inline fun <reified TRepo : DBObject> delete(obj: TRepo): Option<WriteResult> {
+        return db.map { it.getRepository<TRepo>().remove(DBObject::id eq obj.id) }
     }
 
-    inline fun <reified T : Any> find(filter: () -> ObjectFilter)
-            : Either<DBError, Cursor<T>> {
+    inline fun <reified T : Any> find(filter: () -> ObjectFilter): Option<Cursor<T>> {
         return db.map { it.getRepository<T>().find(filter()) }.also {
             db.map { i -> i.getRepository<T>().close() }
         }
@@ -66,8 +66,8 @@ sealed class Database : Loggable {
     inline fun <reified T : Any> findFirst(): Option<T> {
         val db = db
         return when (db) {
-            is Either.Right -> db.b.getRepository<T>().find().firstOrNull().toOption()
-            is Either.Left -> None
+            is Some -> db.t.getRepository<T>().find().firstOrNone()
+            is None -> None
         }
     }
 
@@ -75,24 +75,25 @@ sealed class Database : Loggable {
         db.map { it.close() }
     }
 
-    protected fun initAsEither(op: () -> Nitrite): Either<DbException, Nitrite> {
+    protected fun initAsEither(op: () -> Nitrite): Option<Nitrite> {
         val res = Try { op() }
         return when (res) {
             is Success -> Right(res.value)
             is Failure -> Left(InitError(res.exception.message))
-        }
+        }.ifLeft { errors += it }.toOption()
     }
 
     class MemoryDatabase : Database() {
         override val db = initAsEither { nitrite { } }
-        override fun deleteDatabase(): Either<DbException, Boolean> {
-            return db.map {
-                it.close()
-                true
+        override fun deleteDatabase(): Option<Boolean> {
+            val db = db
+            return when (db) {
+                is Some -> db.t.close().let { Some(true) }
+                is None -> false.some()
             }
         }
 
-        override fun exists(): Either<DbException, Boolean> {
+        override fun exists(): Option<Boolean> {
             return db.map { true }
         }
 
@@ -118,7 +119,7 @@ sealed class Database : Loggable {
             }
         }
 
-        override fun deleteDatabase(): Either<DbException, Boolean> {
+        override fun deleteDatabase(): Option<Boolean> {
             info { "Deleting database [$db]" }
             return db.map { o ->
                 o.close()
@@ -126,9 +127,8 @@ sealed class Database : Loggable {
             }
         }
 
-        override fun exists(): Either<DbException, Boolean> {
-            return db.map { dbFile.exists() }
-        }
+        override fun exists(): Option<Boolean> =
+            db.map { dbFile.exists() }
 
         override fun init(): PersistentDatabase {
             db.map { it.close() }
