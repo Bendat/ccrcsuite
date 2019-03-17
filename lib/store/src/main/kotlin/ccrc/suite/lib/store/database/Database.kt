@@ -19,16 +19,19 @@ interface DBObject {
 }
 
 sealed class Database : Loggable {
+
     abstract val db: Either<DBError, Nitrite>
+
+    abstract fun init(): Database
+    abstract fun deleteDatabase(): Either<DbException, Boolean>
+    abstract fun exists(): Either<DbException, Boolean>
 
     inline fun <reified TRepo : DBObject> create(vararg item: TRepo) = insert(*item)
     inline fun <reified TRepo : DBObject> read(filter: () -> ObjectFilter) = find<TRepo>(filter)
 
-    inline fun <reified TRepo : Any> size(): Option<Long> {
-        return db.map { it.getRepository<TRepo>().size() }.toOption().also {
-            db.map { i -> i.getRepository<TRepo>().close() }
-        }
-    }
+    inline fun <reified TRepo : Any> size() =
+        db.map { it.getRepository<TRepo>().size() }.toOption()
+            .also { db.map { i -> i.getRepository<TRepo>().close() } }
 
     inline fun <reified TRepo : DBObject> insert(vararg item: TRepo)
             : Either<DBError, WriteResult> {
@@ -71,11 +74,6 @@ sealed class Database : Loggable {
     fun close() {
         db.map { it.close() }
     }
-
-    abstract fun init(): Database
-
-    abstract fun deleteDatabase(): Either<DbException, Boolean>
-    abstract fun exists(): Either<DbException, Boolean>
 
     protected fun initAsEither(op: () -> Nitrite): Either<DbException, Nitrite> {
         val res = Try { op() }

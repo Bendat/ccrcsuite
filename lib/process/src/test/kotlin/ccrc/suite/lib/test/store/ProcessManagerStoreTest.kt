@@ -14,13 +14,26 @@ import com.winterbe.expekt.should
 import org.spekframework.spek2.Spek
 import java.io.File
 
-class Tests : Spek({
-    val log = klog<Tests>()
+class ProcessManagerStoreTest : Spek({
+    val log = klog<ProcessManagerStoreTest>()
     val db by memoized { Database.MemoryDatabase() }
     val pm by memoized { ProcessManager() }
     group("Serialization") {
-
         test("Storing ProcessManager") {
+            val file = javaClass.getResource("/HelloWorld.pl").file
+            val id = pm.new(0, File(file), "Test Process 1", args, uuid)
+            pm.size.should.equal(1)
+            pm.queues[PerlProcess.ExecutionState.Queued]?.size.should.equal(1)
+            val found = pm.find(id)
+            log.info(found)
+            db.create(pm)
+            val repo = db.size<ProcessManager>()
+            repo.should.not.be.instanceof(None::class.java)
+        }
+    }
+
+    group("Deserialization") {
+        test("Retrieveing stored ProcessManager") {
             val file = javaClass.getResource("/HelloWorld.pl").file
             val id = pm.new(0, File(file), "Test Process 1", args, uuid)
             pm.size.should.equal(1)
@@ -37,10 +50,6 @@ class Tests : Spek({
             res.map { it.size.should.equal(1) }
             (res is None).should.be.`false`
         }
-    }
-
-    group("Deserialization") {
-
 
     }
 })
