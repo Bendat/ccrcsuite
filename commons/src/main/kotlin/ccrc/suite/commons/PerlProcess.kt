@@ -18,8 +18,8 @@ interface PerlProcess {
         Completed,
         Paused,
         Running,
-        Failed,
-        Queued;
+        Queued,
+        Failed;
 
         val isRunnable get() = this == Queued
     }

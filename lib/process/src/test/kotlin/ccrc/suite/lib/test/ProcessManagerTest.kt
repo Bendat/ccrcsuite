@@ -17,7 +17,7 @@ import java.util.*
 import java.util.UUID.randomUUID
 
 class ProcessManagerTest : Spek({
-    val pm by memoized { ProcessManager() }
+    val pm by memoized { ProcessManager.StandardProcessManager() }
     group("Units") {
 
         test("Verifying Accurate Size") {
@@ -39,6 +39,7 @@ class ProcessManagerTest : Spek({
         }
 
     }
+
     group("Priority Tests") {
         test("Adding runner") {
             val proc = getRunner(uuid)
@@ -100,6 +101,7 @@ class ProcessManagerTest : Spek({
             pm.run(id)
             safeWait(1000)
             val found2 = pm.find(id)
+            log.info{ "queues are [${pm.queues}]" }
             pm.queues[Completed]?.size.should.equal(1)
             (found2 is Some).should.be.`true`
             found2 as Some
@@ -135,13 +137,14 @@ class ProcessManagerTest : Spek({
             found.map { it.state.should.equal(Queued) }
             pm.run(id)
             pm.waitFor(id)
+            safeWait(1000)
             val found2 = pm.find(id)
+            log.info{ "queues are [${pm.queues}]" }
             pm.queues[Completed]?.size.should.equal(1)
             (found2 is Some).should.be.`true`
             found2 as Some
             found2.map { it.state.should.equal(Completed) }
         }
-
     }
 })
 

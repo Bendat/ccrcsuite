@@ -16,7 +16,7 @@ import java.io.File
 class ProcessManagerStoreTest : Spek({
     val log = klog<ProcessManagerStoreTest>()
     val db by memoized { Database.MemoryDatabase() }
-    val pm by memoized { ProcessManager() }
+    val pm by memoized { ProcessManager.StandardProcessManager() }
     group("Serialization") {
         test("Storing ProcessManager") {
             val file = javaClass.getResource("/HelloWorld.pl").file
@@ -26,7 +26,7 @@ class ProcessManagerStoreTest : Spek({
             val found = pm.find(id)
             log.info(found)
             db.create(pm)
-            val repo = db.size<ProcessManager>()
+            val repo = db.size<ProcessManager.StandardProcessManager>()
             repo.should.not.be.instanceof(None::class.java)
         }
     }
@@ -40,11 +40,11 @@ class ProcessManagerStoreTest : Spek({
             val found = pm.find(id)
             log.info(found)
             db.create(pm)
-            val repo = db.size<ProcessManager>()
+            val repo = db.size<ProcessManager.StandardProcessManager>()
             repo.should.not.be.instanceof(None::class.java)
             repo as Some<Long>
             repo.t.should.equal(1)
-            val res = db.findFirst<ProcessManager>()
+            val res = db.findFirst<ProcessManager.StandardProcessManager>()
             log.info { res }
             res.map { it.size.should.equal(1) }
             (res is None).should.be.`false`

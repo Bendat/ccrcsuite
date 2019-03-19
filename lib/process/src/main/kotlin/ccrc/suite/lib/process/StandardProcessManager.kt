@@ -4,14 +4,15 @@ package ccrc.suite.lib.process
 
 import arrow.core.Option
 import arrow.core.toOption
-import ccrc.suite.commons.ErrorHandler
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.PerlProcess.ExecutionState
 import ccrc.suite.commons.PerlProcess.ExecutionState.*
 import ccrc.suite.commons.logger.Loggable
 import ccrc.suite.commons.utils.uuid
 import ccrc.suite.lib.store.database.DBObject
+import javafx.application.Platform
 import javafx.beans.property.SimpleListProperty
+import javafx.beans.property.SimpleMapProperty
 import javafx.collections.FXCollections
 import org.dizitart.no2.Document
 import org.dizitart.no2.mapper.Mappable
@@ -19,34 +20,34 @@ import org.dizitart.no2.mapper.NitriteMapper
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
 import org.zeroturnaround.exec.listener.ProcessListener
+import tornadofx.task
 import java.io.File
 import java.lang.System.currentTimeMillis
 import java.util.*
 
-typealias NewValue = Wrapper
-typealias OldValue = Wrapper
-
-class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObject {
-    private var _queues: MutableMap<ExecutionState, ProcessQueue> =
-        mutableMapOf(
-            Completed to ProcessQueue(),
-            Paused to ProcessQueue(),
-            Running to ProcessQueue { it.runner.start() },
-            Failed to ProcessQueue(),
-            Queued to ProcessQueue()
-        )
-
+open class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObject {
     val queues get() = _queues
     val size get() = queues.map { it.value.size }.sum()
     val next get() = queues[Queued]!!.first
     val running get() = queues[Running]?.size ?: 0
     var max = 3
+    @get:Synchronized
+    @set:Synchronized
+    @Volatile
+    private var _queues: MutableMap<ExecutionState, ProcessQueue> =
+        SimpleMapProperty<ExecutionState, ProcessQueue>(FXCollections.observableHashMap()).apply {
+            put(Completed, ProcessQueue())
+            put(Paused, ProcessQueue())
+            put(Running, ProcessQueue())
+            put(Failed, ProcessQueue())
+            put(Queued, ProcessQueue())
+        }
+
 
     override fun write(p0: NitriteMapper?) = Document().apply {
         put("queues", queues)
         put("max", max)
     }
-
 
     override fun read(p0: NitriteMapper?, p1: Document?) {
         p1?.let {
@@ -94,11 +95,28 @@ class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObjec
         queues.map { entry -> entry.value.firstOrNull { it.runner.process.id == processId } }
             .map { it?.runner?.start() }.firstOrNull().toOption()
 
+    fun stop(processId: UUID) {
+        find(processId).flatMap { it.runner.stop() }
+    }
+
+    fun shutdown(onStopped: (PerlProcess) -> Unit = {}) {
+        queues.flatMap { it.value }.forEach {
+            it.runner.stop()
+            onStopped(it.runner.process)
+        }
+    }
+
     internal operator fun set(priority: Int, state: ExecutionState, process: ProcessRunner) {
         queues.map { e -> e.value.removeIf { it.runner.process.id == process.process.id } }
         if (state == Running && queues[state]!!.size >= max)
             queues[Queued]!! += Wrapper(process, priority, Queued)
         else queues[state]!!.add(Wrapper(process, priority, state))
+    }
+
+    open operator fun set(priority: Int, state: ExecutionState, processID: UUID) {
+        find(processID).map {
+            this[priority, state] = it.runner
+        }
     }
 
     fun waitFor(processId: UUID) {
@@ -109,25 +127,24 @@ class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObjec
         queues[queue]?.filter { it.priority == priority }?.map { it.runner } ?: listOf()
 
     operator fun get(queue: ExecutionState): ProcessQueue = queues[queue]!!
-
     operator fun get(queue: ExecutionState, process: ProcessRunner) =
         queues[queue]?.first { it.runner == process }.toOption()
 
     operator fun get(queue: ExecutionState, processId: UUID) =
         queues[queue]?.first { it.runner.process.id == processId }.toOption()
 
-    operator fun set(processId: UUID, queue: ExecutionState) {
+
+    open operator fun set(processId: UUID, queue: ExecutionState) {
         find(processId).map { p ->
             info { "Removing [${p.runner.process.name}] from [${p.state}] for [$queue]" }
             queues[p.state]?.remove(p).also { info { "Removed: [$it][${p.state}][$queue]" } }
-            this[p.priority, queue] = p.runner
+            this@ProcessManager[p.priority, queue] = p.runner
         }
     }
 
     fun findQueue(processId: UUID): Option<Wrapper> =
         queues.entries.map { it.value.firstOrNull { q -> q.runner.process.id == processId } }
             .firstOrNull().toOption()
-
 
     override fun toString() =
         "ProcessManager(queues=${queues.map { "[${it.key}][${it.value.size}]" }.joinToString()})"
@@ -136,18 +153,33 @@ class ProcessManager(override val id: UUID = uuid) : Loggable, Mappable, DBObjec
 
         override fun afterStart(process: Process?, executor: ProcessExecutor?) {
             info { "Process [$processId] has started" }
-            this@ProcessManager[processId] = Running
+//            this@ProcessManager[processId] = Running
         }
 
         override fun afterFinish(process: Process, result: ProcessResult) {
-            info { "Process [$processId] has completed" }
-            this@ProcessManager[processId] =
-                    PerlProcess.ExitCode.fromInt(result.exitValue).state
-                        .also { info { "Found state was [$it]" } }
+//                this@ProcessManager[processId] =
+//                        PerlProcess.ExitCode.fromInt(result.exitValue).state
+//                            .also { info { "Found state was [$it]" } }
+            }
+
+    }
+
+    class StandardProcessManager(id: UUID = uuid) : ProcessManager(id)
+    class FXProcessManager(id: UUID = uuid) : ProcessManager(id) {
+        override fun set(processId: UUID, queue: ExecutionState) {
+            Platform.runLater { super.set(processId, queue) }
+        }
+
+        override fun set(priority: Int, state: ExecutionState, processID: UUID) {
+            Platform.runLater {
+                find(processID).map {
+                    this[it.runner.process.id] = state
+                }
+            }
         }
     }
-}
 
+}
 
 data class Wrapper(
     val runner: ProcessRunner,
@@ -163,21 +195,26 @@ class ProcessQueue(
     val onAdd: ProcessQueue.(Wrapper) -> Unit = {},
     val onRemove: ProcessQueue.(Wrapper) -> Unit = {}
 ) : SimpleListProperty<Wrapper>(FXCollections.observableArrayList()), Loggable {
+
     operator fun get(id: UUID): Option<Wrapper> =
         firstOrNull { it.runner.process.id == id }.toOption()
 
+    @Synchronized
     override fun add(element: Wrapper): Boolean {
         return super.add(element)
             .also { onAdd(element) }
             .also { sortByDescending { w -> w.priority } }
             .also { info { "Adding element [$element] size is now [$size]" } }
+
     }
 
+    @Synchronized
     override fun remove(element: Wrapper): Boolean {
         return super.remove(element)
             .also { onRemove(element) }
             .also { sortByDescending { w -> w.priority } }
             .also { info { "Removing element [$element] size is now [$size]" } }
+
     }
 
     val first: Option<Wrapper>
