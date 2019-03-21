@@ -24,7 +24,7 @@ import kotlin.collections.ArrayList
 val log = object : Loggable {}
 
 @Testable
-object ProcessRunnerTest : Spek({
+class ProcessRunnerTest : Spek({
     val os by memoized { LoggingAppender(UUID.randomUUID()) }
     val es by memoized { ErrorLoggingAppender(UUID.randomUUID()) }
     val autoflush by memoized {
@@ -120,9 +120,7 @@ val lg get() = object : Loggable {}
 private fun getProcess(file: String): ITasserProcess {
     val flush = System.getProperty("autoflush")
     lg.info { "Flush is [$flush]" }
-    val params = if (flush?.toBoolean() == true)
-        listOf("perl", AutoFlush.toString(), file)
-    else listOf("perl", file)
+    val params = listOf("perl", AutoFlush.toString(), file)
     return ITasserProcess(
         UUID.randomUUID(),
         File(""),

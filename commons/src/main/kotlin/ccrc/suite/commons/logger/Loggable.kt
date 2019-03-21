@@ -58,14 +58,13 @@ interface Loggable {
         format: Boolean = true,
         logtype: LogLevel
     ) {
-        val caller = "\n\tStack:[\n$stackTrace\t]"
+
         val sb = if (format) WordUtils.wrap(
             msg.toString(), 180, "\n\t",
             false, " "
         )//.substring(0, min(3000, msg.toString().length))
         else msg
 
-        val str = "$sb\n$caller"
-        logtype(str)
+        logtype(sb.toString())
     }
 }

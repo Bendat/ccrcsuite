@@ -17,6 +17,7 @@ import org.zeroturnaround.process.ProcessUtil.destroyForcefullyAndWait
 import org.zeroturnaround.process.ProcessUtil.destroyGracefullyAndWait
 import org.zeroturnaround.process.Processes
 import org.zeroturnaround.process.SystemProcess
+import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
@@ -33,9 +34,10 @@ class ProcessRunner(
 
     var future: Option<Future<ProcessResult>> = None
 
-    private val std = STD()
+    val std = STD()
     private val processExecutor: ProcessExecutor = ProcessExecutor()
         .command(process.args).readOutput(true).addListener(listener)
+
     private var realProcess: Option<StartedProcess> = None
     private var sysProcess: Option<SystemProcess> = None
 
@@ -83,11 +85,13 @@ class ProcessRunner(
     }
 
     fun outputTo(stream: LogOutputStream): ProcessRunner {
+        info{"Redirecting output"}
         processExecutor.redirectOutput(stream)
         return this
     }
 
     fun errorTo(stream: LogOutputStream): ProcessRunner {
+        info{"Redirecting error"}
         processExecutor.redirectError(stream)
         return this
     }

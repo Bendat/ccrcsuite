@@ -1,87 +1,70 @@
 package ccrc.suite.gui.views.test.views.processview
 
-import ccrc.suite.commons.PerlProcess
-import ccrc.suite.commons.PerlProcess.ExecutionState.*
 import ccrc.suite.commons.logger.Loggable
 import ccrc.suite.commons.utils.safeWait
-import ccrc.suite.commons.utils.uuid
 import ccrc.suite.gui.views.ProcessesView
 import ccrc.suite.lib.process.ArgNames
 import ccrc.suite.lib.process.ProcessManager
-import ccrc.suite.lib.process.Wrapper
-import com.winterbe.expekt.should
 import javafx.application.Platform
 import javafx.scene.Scene
 import javafx.stage.Stage
 import javafx.stage.StageStyle
-import org.junit.jupiter.api.Test
+import org.junit.Before
+import org.junit.Test
+import org.testfx.api.FxRobot
 import org.testfx.api.FxToolkit
-import org.testfx.framework.junit5.ApplicationTest
-import java.io.File
+import org.testfx.util.WaitForAsyncUtils
+import java.util.concurrent.Callable
 
-class ExploratoryProcessesViewAutomationTest : ApplicationTest(), Loggable {
-    val primaryStage: Stage = FxToolkit.registerPrimaryStage()
+
+class ExploratoryProcessesViewAutomationTest : FxRobot(), Loggable {
     val manager = ProcessManager.FXProcessManager()
+    lateinit var primaryStage: Stage
     @get:Synchronized
-    val list = ProcessesView(manager)
-    val file = javaClass.getResource("/KeepAlive.pl").file
+    lateinit var view: ProcessesView
 
-    override fun init() {
-        Platform.runLater {
-            primaryStage.initStyle(StageStyle.UNIFIED)
-            primaryStage.scene = Scene(list.root)
-            super.start(primaryStage)
-            primaryStage.show()
+
+    @Before
+    fun setup() {
+        FxToolkit.registerPrimaryStage()
+        FxToolkit.setupFixture {
+            val stage1 = Stage(StageStyle.UNIFIED)
+            view = ProcessesView(manager)
+            stage1.scene = Scene(view.root)
+            stage1.show()
         }
-        safeWait(1000)
     }
 
     @Test
-    fun `verifying listview`() {
+    fun test() {
+        Platform.runLater {
+            val proc = ProcessesView.NewProcessViewModel().apply {
+                name = "Short Lived Process"
+                file = javaClass.getResource("/Loop5.pl").file
+            }
+            val proc2 = ProcessesView.NewProcessViewModel().apply {
+                name = "Long lived Process"
+                file = javaClass.getResource("/KeepAlive.pl").file
+            }
+           val proc3 = ProcessesView.NewProcessViewModel().apply {
+                name = "Error Process"
+                file = javaClass.getResource("/Error.pl").file
+            }
 
-        val procs = PerlProcess.ExecutionState.values().map {
-            info { "value of [$it]" }
-            newProcess(0) { it.name }
+            Platform.runLater {
+                val new = view.model.newProcess(proc)
+                val new2 = view.model.newProcess(proc2)
+                val new3 = view.model.newProcess(proc3)
+                info { "New result is $new" }
+                safeWait(1000)
+//                view.model.manager.find(new).map { view.model.run(new) }
+//                view.model.manager.find(new2).map { view.model.run(new2) }
+                 view.model.run(new3)
+            }
+            safeWait(1000)
         }
-        safeWait(1000)
-        manager[0, Completed] = procs[0]
-        manager[0, Running] = procs[1]
-        manager[0, Queued] = procs[2]
-        manager[0, Paused] = procs[3]
-        manager[0, Failed] = procs[4]
-
-        safeWait(100000)
-        info { "Lookup is: ${lookup(".Started")}" }
-        lookup(".Started").queryListView<Wrapper>()
-            .items.size.should.equal(1)
-        lookup(".Failed").queryListView<Wrapper>()
-            .items.size.should.equal(1)
-
+        safeWait(60000)
     }
-
-//    @Test
-//    fun `executing test process`() {
-//       val id = newProcess()
-//        safeWait(1000)
-//        val run = manager.run(id)
-//        run.toEither { }.mapLeft { it.should.be.`null` }
-//            .map {it.await()}
-//        info { "things are [${list.things.map { it.items }}]" }
-//        manager.size.should.equal(1)
-//        safeWait(5000)
-//        manager[Completed].size.should.equal(1)
-//        safeWait(1000)
-//        info{list.things.map { it.items.size }.sum()}
-//        list.things.map { it.items.size }.sum().should.equal(1)
-//        safeWait(5000)
-
-//    }
-
-    private fun newProcess(
-        priority: Int, state:
-        PerlProcess.ExecutionState = PerlProcess.ExecutionState.Running, name: () -> String
-    ) =
-        manager.new(0, File(file), name(), args(), uuid)
 
     private fun args() = listOf("perl", ArgNames.AutoFlush.toString())
 }
