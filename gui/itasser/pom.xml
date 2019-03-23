@@ -63,6 +63,12 @@
             <version>5.4.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->
+        <dependency>
+            <groupId>com.github.javafaker</groupId>
+            <artifactId>javafaker</artifactId>
+            <version>0.17.2</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -91,6 +97,17 @@
             <artifactId>expekt</artifactId>
             <version>0.5.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.4.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.arrow-kt/arrow-data -->
+        <dependency>
+            <groupId>io.arrow-kt</groupId>
+            <artifactId>arrow-data</artifactId>
+            <version>0.8.2</version>
         </dependency>
     </dependencies>
 

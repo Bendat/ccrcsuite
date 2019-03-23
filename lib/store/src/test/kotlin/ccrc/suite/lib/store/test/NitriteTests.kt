@@ -1,9 +1,7 @@
 package ccrc.suite.lib.store.test
 
-import ccrc.suite.commons.logger.Loggable
-import org.dizitart.kno2.documentOf
+import ccrc.suite.commons.logger.Logger
 import org.dizitart.kno2.filters.eq
-import org.dizitart.kno2.getCollection
 import org.dizitart.kno2.getRepository
 import org.dizitart.kno2.nitrite
 import org.dizitart.no2.objects.ObjectRepository
@@ -12,7 +10,7 @@ import org.spekframework.spek2.Spek
 
 @Testable
 class NitriteTests: Spek({
-    val log = object: Loggable {}
+    val log = object: Logger {}
     group("Initial Investigation Group"){
         val db by memoized{nitrite {}}
         lateinit var repo: ObjectRepository<DocItem>

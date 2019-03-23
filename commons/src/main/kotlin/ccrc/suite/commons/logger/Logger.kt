@@ -9,14 +9,14 @@ import kotlin.reflect.KClass
 
 inline fun <reified T> klog() = KLog(T::class)
 
-class KLog(val caller: KClass<*>) : Loggable {
+class KLog(val caller: KClass<*>) : ccrc.suite.commons.logger.Logger {
     override val klog get() = LoggerFactory.getLogger(caller.java)
 
     constructor(caller: Any) : this(caller::class)
 }
 typealias LogLevel = (String) -> Unit
 
-interface Loggable {
+interface Logger {
     @get:JsonIgnore
     val klog: Logger
         get() = LoggerFactory.getLogger(this::class.java)

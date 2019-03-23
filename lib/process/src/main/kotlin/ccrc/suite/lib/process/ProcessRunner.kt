@@ -7,7 +7,7 @@ import arrow.core.some
 import ccrc.suite.commons.ErrorHandler
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.TrackingList
-import ccrc.suite.commons.logger.Loggable
+import ccrc.suite.commons.logger.Logger
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
 import org.zeroturnaround.exec.StartedProcess
@@ -17,7 +17,6 @@ import org.zeroturnaround.process.ProcessUtil.destroyForcefullyAndWait
 import org.zeroturnaround.process.ProcessUtil.destroyGracefullyAndWait
 import org.zeroturnaround.process.Processes
 import org.zeroturnaround.process.SystemProcess
-import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
@@ -26,7 +25,7 @@ import java.util.concurrent.TimeUnit.SECONDS
 class ProcessRunner(
     val process: PerlProcess,
     listener: ProcessListener
-) : Loggable, ErrorHandler<ProcessError> {
+) : Logger, ErrorHandler<ProcessError> {
     override val errors = TrackingList<ProcessError>()
 
     val state get() = process.state
@@ -115,7 +114,7 @@ class ProcessRunner(
         return process.hashCode()
     }
 
-    inner class ProcessLogAppender(val list: TrackingList<String>) : LogOutputStream(), Loggable {
+    inner class ProcessLogAppender(val list: TrackingList<String>) : LogOutputStream(), Logger {
         override fun processLine(p0: String) {
             info { "Logging line [$p0] for runner [${process.name}][${process.id}]" }
             list += p0

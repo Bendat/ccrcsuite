@@ -5,7 +5,7 @@ import ccrc.suite.commons.ErrorHandler
 import ccrc.suite.commons.TrackingList
 import ccrc.suite.commons.User
 import ccrc.suite.commons.extensions.ifLeft
-import ccrc.suite.commons.logger.Loggable
+import ccrc.suite.commons.logger.Logger
 import org.dizitart.kno2.filters.eq
 import org.dizitart.kno2.getRepository
 import org.dizitart.kno2.nitrite
@@ -21,7 +21,7 @@ interface DBObject {
     val id: UUID
 }
 
-sealed class Database : Loggable, ErrorHandler<DBError> {
+sealed class Database : Logger, ErrorHandler<DBError> {
     abstract val db: Option<Nitrite>
 
     override val errors = TrackingList<DBError>()

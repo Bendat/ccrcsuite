@@ -6,7 +6,7 @@ import arrow.core.*
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.PerlProcess.ExecutionState
 import ccrc.suite.commons.PerlProcess.ExecutionState.*
-import ccrc.suite.commons.logger.Loggable
+import ccrc.suite.commons.logger.Logger
 import ccrc.suite.commons.utils.uuid
 import ccrc.suite.lib.store.database.DBObject
 import javafx.application.Platform
@@ -27,7 +27,7 @@ import java.io.File
 import java.lang.System.currentTimeMillis
 import java.util.*
 
-open class ProcessManager(@Id override val id: UUID = uuid) : Loggable, Mappable, DBObject {
+open class ProcessManager(@Id override val id: UUID = uuid) : Logger, Mappable, DBObject {
     val queues get() = _queues
     val size get() = queues.map { it.value.size }.sum()
     val next get() = queues[Queued]!!.first
@@ -247,7 +247,7 @@ data class Wrapper(
 class ProcessQueue(
     val onAdd: ProcessQueue.(Wrapper) -> Unit = {},
     val onRemove: ProcessQueue.(Wrapper) -> Unit = {}
-) : SimpleListProperty<Wrapper>(FXCollections.observableArrayList()), Loggable {
+) : SimpleListProperty<Wrapper>(FXCollections.observableArrayList()), Logger {
 
     operator fun get(id: UUID): Option<Wrapper> =
         firstOrNull { it.runner.process.id == id }.toOption()

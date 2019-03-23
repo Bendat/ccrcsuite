@@ -1,7 +1,6 @@
-package ccrc.suite.gui.views.test.views.processview
+package ccrc.suite.gui.views.test.components.process.view
 
 import ccrc.suite.commons.utils.safeWait
-import ccrc.suite.gui.views.ProcessesView
 import ccrc.suite.gui.views.ProcessesView.NewProcessWizard
 import javafx.scene.Scene
 import javafx.stage.Stage
@@ -10,9 +9,8 @@ import org.junit.Before
 import org.junit.Test
 import org.testfx.api.FxRobot
 import org.testfx.api.FxToolkit
-import org.testfx.framework.junit.ApplicationTest
 
-class NewProcessWizardTest: FxRobot() {
+class NewProcessSimpleCompletion: FxRobot() {
     lateinit var view: NewProcessWizard
 
     @Before
@@ -26,9 +24,10 @@ class NewProcessWizardTest: FxRobot() {
         }
     }
 
+//    @Test
+//    fun `
 
     @Test
-    fun test() {
-        safeWait(100000)
-    }
+    fun test() = safeWait(100000)
+
 }

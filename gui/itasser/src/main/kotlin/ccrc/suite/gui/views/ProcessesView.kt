@@ -3,7 +3,7 @@
 package ccrc.suite.gui.views
 
 import ccrc.suite.commons.Parameter
-import ccrc.suite.commons.logger.Loggable
+import ccrc.suite.commons.logger.Logger
 import ccrc.suite.gui.controllers.ProcessViewController
 import ccrc.suite.lib.process.ProcessManager
 import ccrc.suite.lib.process.ProcessQueue
@@ -19,7 +19,7 @@ import javafx.util.converter.NumberStringConverter
 import tornadofx.*
 import java.io.File
 
-class ProcessesView(manager: ProcessManager) : View("Process List"), Loggable {
+class ProcessesView(manager: ProcessManager) : View("Process List"), Logger {
     val model = ProcessViewController(manager)
 
     constructor() : this(ProcessManager())
@@ -29,7 +29,9 @@ class ProcessesView(manager: ProcessManager) : View("Process List"), Loggable {
             left {
                 button("+") {
                     addClass("new-process")
-                    action { text = "HI" }
+                    action {
+                        NewProcessWizard().openModal()
+                    }
                 }
             }
             top { label("Sequences") }
@@ -92,7 +94,7 @@ class ProcessesView(manager: ProcessManager) : View("Process List"), Loggable {
         }
     }
 
-    class NewProcessModal : View("Setup"), Loggable {
+    class NewProcessModal : View("Setup"), Logger {
         val proc = find<ProcessesView>()
         val model by inject<NewProcessViewModel>()
 
@@ -103,23 +105,26 @@ class ProcessesView(manager: ProcessManager) : View("Process List"), Loggable {
 
         override val root = form {
             fieldset("Sequence Info") {
-                field("name") {
-                    textfield {
+                field("Seq File ") {
+                    textfield(model.name) {
                         addClass("name-field-new-process")
-                        model.nameProperty.bindBidirectional(textProperty())
-                    }
+                        validator {
+                            if (it.isNullOrBlank()) error("The name field is required") else null
+                        }
+                    }//.required()
                 }
-                field("File") {
-                    textfield {
+                field("Sequence Name") {
+                    textfield(model.file) {
                         addClass("file-field-new-process")
-                        textProperty().bindBidirectional(model.fileProperty)
                         setOnMouseClicked {
                             val filters = arrayOf(FileChooser.ExtensionFilter("ITasser Scripts", "*.pl"))
                             val files: List<File> = chooseFile("Select Script File", filters, FileChooserMode.Single)
                             this@textfield.text = files.firstOrNull()?.absolutePath ?: text
-
                         }
-                    }
+//                        validator {
+//                            if (it.isNullOrBlank()) error("The name field is required") else null
+//                        }
+                    }//.required()
 
                 }
             }
@@ -127,45 +132,26 @@ class ProcessesView(manager: ProcessManager) : View("Process List"), Loggable {
         }
     }
 
-    class MandatoryParametersModal : View("Parameters"), Loggable {
+    class OptionalParametersModal : View("Opt. Parameters"), Logger {
         val model by inject<NewProcessViewModel>()
-        override val root = form {
-            fieldset("Mandatory") {
-                field(Parameter.PkgDir.name) {
-                    textfield {
-                        promptText = Parameter.PkgDir.str
-                        model.arguments[Parameter.PkgDir] = textProperty()
-                    }
-                }
-                field(Parameter.SeqName.name) {
-                    textfield {
-                        promptText = Parameter.SeqName.str
-                        model.arguments[Parameter.SeqName] = textProperty()
-                    }
-                }
-            }
-        }
-    }
-
-    class OptionalParametersModal : View("Opt. Parameters"), Loggable {
-        val model by inject<NewProcessViewModel>()
-        override val root = vbox {
-            maxHeight = 400.0
+        override val root = scrollpane {
+            maxHeight = 200.0
+            minWidth = 350.0
             form {
-                scrollpane {
-                    fieldset("Mandatory") {
-                        Parameter.values().filter { it != Parameter.SeqName && it != Parameter.PkgDir }.forEach {
-                            field {
-                                textfield(it.name) {
-                                    promptText = it.str
-                                    model.arguments[it] = textProperty()
-                                }
+
+                fieldset("Mandatory") {
+                    Parameter.values().filter { it != Parameter.SeqName && it != Parameter.PkgDir }.forEach {
+                        field(it.name) {
+                            textfield {
+                                addClass(it.name)
+                                promptText = it.str
+                                model.arguments[it] = textProperty()
                             }
                         }
                     }
                 }
             }
-            label("Leave empty for defaults") { }
+
         }
     }
 
@@ -175,18 +161,24 @@ class ProcessesView(manager: ProcessManager) : View("Process List"), Loggable {
 
         init {
             add(ProcessesView.NewProcessModal::class)
-            add(ProcessesView.MandatoryParametersModal::class)
+//            add(ProcessesView.MandatoryParametersModal::class)
             add(ProcessesView.OptionalParametersModal::class)
         }
     }
 
-    class NewProcessViewModel : ViewModel() {
+    class NewProcess : Controller() {
         val nameProperty = SimpleStringProperty()
         var name by nameProperty
         val fileProperty = SimpleObjectProperty<String>()
         var file by fileProperty
 
         val arguments = SimpleMapProperty<Parameter, StringProperty>(FXCollections.observableHashMap())
+    }
+
+    class NewProcessViewModel(newProcess: NewProcess) : ItemViewModel<NewProcess>(newProcess) {
+        var name by bind(NewProcess::nameProperty)
+        var file by bind(NewProcess::fileProperty)
+        var arguments by bind(NewProcess::arguments)
     }
 }
 

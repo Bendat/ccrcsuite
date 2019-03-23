@@ -11,7 +11,20 @@
 
     <artifactId>commons</artifactId>
     <packaging>jar</packaging>
-
+    <repositories>
+        <repository>
+            <id>spek-dev</id>
+            <url>https://dl.bintray.com/spekframework/spek-dev</url>
+        </repository>
+        <repository>
+            <id>jcenter</id>
+            <url>https://jcenter.bintray.com/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
     <name>ccrc.suite commons</name>
 
     <properties>
@@ -67,13 +80,34 @@
         <dependency>
             <groupId>io.arrow-kt</groupId>
             <artifactId>arrow-core</artifactId>
-            <version>0.7.2</version>
+            <version>0.8.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>${joda-time.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.arrow-kt</groupId>
+            <artifactId>arrow-data</artifactId>
+            <version>0.8.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.spekframework.spek2</groupId>
+            <artifactId>spek-dsl-jvm</artifactId>
+            <version>2.0.0-rc.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.spekframework.spek2</groupId>
+            <artifactId>spek-runner-junit5</artifactId>
+            <version>2.0.0-rc.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.winterbe</groupId>
+            <artifactId>expekt</artifactId>
+            <version>0.5.0</version>
         </dependency>
     </dependencies>
 

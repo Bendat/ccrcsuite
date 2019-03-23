@@ -1,7 +1,6 @@
 package ccrc.suite.commons
 
-import ccrc.suite.commons.logger.Loggable
-import java.awt.SystemColor.info
+import ccrc.suite.commons.logger.Logger
 import java.io.File
 import java.util.*
 
@@ -24,14 +23,14 @@ interface PerlProcess {
         val isRunnable get() = this == Queued
     }
 
-    enum class ExitCode(val code: Int, val state: ExecutionState) : Loggable{
+    enum class ExitCode(val code: Int, val state: ExecutionState) : Logger{
         OK(0, ExecutionState.Completed),
         CtrlC(130, ExecutionState.Paused),
         SigTerm(143, ExecutionState.Paused),
         SigKill(9, ExecutionState.Paused),
         Error(1, ExecutionState.Failed);
 
-        companion object: Loggable {
+        companion object: Logger {
             fun fromInt(code: Int): ExitCode {
                 return values().first { it.code == code }.also{
                     info{"Selecting ExitCode [$it] for [$code]"}

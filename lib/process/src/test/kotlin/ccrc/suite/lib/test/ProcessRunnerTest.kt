@@ -4,7 +4,7 @@ package ccrc.suite.lib.test
 
 import arrow.core.None
 import ccrc.suite.commons.PerlProcess
-import ccrc.suite.commons.logger.Loggable
+import ccrc.suite.commons.logger.Logger
 import ccrc.suite.commons.utils.safeWait
 import ccrc.suite.lib.process.ArgNames.AutoFlush
 import ccrc.suite.lib.process.ExitCodes
@@ -21,7 +21,7 @@ import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
-val log = object : Loggable {}
+val log = object : Logger {}
 
 @Testable
 class ProcessRunnerTest : Spek({
@@ -116,7 +116,7 @@ class ProcessRunnerTest : Spek({
     }
 })
 
-val lg get() = object : Loggable {}
+val lg get() = object : Logger {}
 private fun getProcess(file: String): ITasserProcess {
     val flush = System.getProperty("autoflush")
     lg.info { "Flush is [$flush]" }
@@ -145,7 +145,7 @@ fun listener(op: TestListener.() -> Unit): ProcessListener {
     return TestListener().apply(op)
 }
 
-class TestListener : ProcessListener(), Loggable {
+class TestListener : ProcessListener(), Logger {
     private val bstart = ArrayList<(ProcessExecutor) -> Unit>()
     private val astart = ArrayList<(Process, ProcessExecutor) -> Unit>()
     private val astop = ArrayList<(Process) -> Unit>()
@@ -197,7 +197,7 @@ class TestListener : ProcessListener(), Loggable {
     }
 }
 
-class LoggingAppender(val processId: UUID) : Loggable, LogOutputStream() {
+class LoggingAppender(val processId: UUID) : Logger, LogOutputStream() {
     val lines = arrayListOf<String>()
     override fun processLine(p0: String) {
         info { "[$processId] processing line [$p0] " }
@@ -207,7 +207,7 @@ class LoggingAppender(val processId: UUID) : Loggable, LogOutputStream() {
     val size get() = lines.size
 }
 
-class ErrorLoggingAppender(val processId: UUID) : Loggable, LogOutputStream() {
+class ErrorLoggingAppender(val processId: UUID) : Logger, LogOutputStream() {
     val lines = arrayListOf<String>()
     override fun processLine(p0: String) {
         error { "[$processId] processing line [$p0] " }

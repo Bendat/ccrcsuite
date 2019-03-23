@@ -1,25 +1,21 @@
 package ccrc.suite.commons
 
 
-import arrow.core.Either
 import arrow.core.Try
-import ccrc.suite.commons.logger.Loggable
-import com.fasterxml.jackson.core.JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES
+import ccrc.suite.commons.logger.Logger
 import com.fasterxml.jackson.databind.DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT
 import com.fasterxml.jackson.databind.DeserializationFeature.READ_ENUMS_USING_TO_STRING
 import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectWriter
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
 import java.io.File
-import java.io.IOException
 
 /**
  * Handles Serialization to an from Json and Yaml.
  */
-object Serializer : Loggable {
+object Serializer : Logger {
     val jsonMapper: ObjectMapper
     val jsonwriter: ObjectWriter
 
