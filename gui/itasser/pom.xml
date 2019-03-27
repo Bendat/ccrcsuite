@@ -36,7 +36,6 @@
             <groupId>org.testfx</groupId>
             <artifactId>testfx-spock</artifactId>
             <version>4.0.15-alpha</version>
-            <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.spockframework/spock-core -->
         <dependency>

@@ -2,6 +2,7 @@ package ccrc.suite.gui.wizard.install
 
 import ccrc.suite.gui.wizard.install.controllers.InstallWizardController
 import ccrc.suite.gui.wizard.install.viewmodels.InstallWizardViewModel
+import ccrc.suite.gui.wizard.install.views.ITasserSetupPage
 import ccrc.suite.gui.wizard.install.views.RegistrationPage
 import tornadofx.Wizard
 
@@ -14,5 +15,6 @@ class InstallWizard : Wizard() {
 
     init {
         add(RegistrationPage::class)
+        add(ITasserSetupPage::class)
     }
 }

@@ -16,4 +16,18 @@ class InstallWizardController {
     var repeatPassword by repeatPasswordProperty
 
 
+    val pkgDirProperty = SimpleStringProperty()
+    val pkgDir by pkgDirProperty
+
+    val libDirProperty = SimpleStringProperty()
+    var libDir by libDirProperty
+
+    val javaHomeProperty = SimpleStringProperty()
+    var javaHome by javaHomeProperty
+
+    val dataDirProperty = SimpleStringProperty()
+    var dataDir by dataDirProperty
+
+    val runStyleProperty = SimpleStringProperty()
+    val runStyle by runStyleProperty
 }

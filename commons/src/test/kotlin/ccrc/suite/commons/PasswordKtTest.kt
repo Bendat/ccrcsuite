@@ -25,7 +25,6 @@ class PasswordKtTest : Spek({
                 password as Invalid
                 val err = password.e
                 err as MissingUpper
-
             }
 
             test("Missing Special Characters") {
@@ -43,7 +42,6 @@ class PasswordKtTest : Spek({
                 val err = password.e
                 err as MissingLower
             }
-
         }
 
         test("Valid Password"){

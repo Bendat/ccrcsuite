@@ -6,20 +6,26 @@ import arrow.data.Validated
 
 private val spcharset = """!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
 private val specialChars = spcharset.toList()
+
 fun String.validPassword(
     minLength: Int = 8,
     maxLength: Int = 1024,
     capitals: Boolean = true,
     specials: Boolean = true
-): Validated<BadPassword, String> =
-    when {
-        length > maxLength -> Invalid(LongPassword(length, maxLength))
-        length < minLength -> Invalid(ShortPassword(length, minLength))
-        !any { it.isUpperCase() } && capitals -> Invalid(MissingUpper("Requires at least one uppercase character"))
-        !any { it.isLowerCase() } && capitals -> Invalid(MissingLower("Requires at least one uppercase character"))
-        !any { specialChars.contains(it) } && specials -> Invalid(MissingCharset(spcharset))
-        else -> Valid(this)
-    }
+): Validated<BadPassword, String> = when {
+
+    length > maxLength ->
+        Invalid(LongPassword(length, maxLength))
+    length < minLength ->
+        Invalid(ShortPassword(length, minLength))
+    !any { it.isUpperCase() } && capitals ->
+        Invalid(MissingUpper("Requires at least one uppercase character"))
+    !any { it.isLowerCase() } && capitals ->
+        Invalid(MissingLower("Requires at least one uppercase character"))
+    !any { specialChars.contains(it) } && specials ->
+        Invalid(MissingCharset(spcharset))
+    else -> Valid(this)
+}
 
 typealias BadPassword = PasswordValidationError
 typealias BadLength = PasswordValidationError.PasswordLengthError
@@ -38,14 +44,13 @@ sealed class PasswordValidationError() {
 
         data class ShortPasswordError(
             override val length: Int,
-            override val threshold: Int = 6
-        ) : PasswordLengthError() {
-            override val message = "Password too short [$length/$threshold]"
-        }
+            override val threshold: Int,
+            override val message: String = "Password too short [$length/$threshold]"
+        ) : PasswordLengthError()
 
         data class LongPasswordError(
             override val length: Int,
-            override val threshold: Int = 6,
+            override val threshold: Int,
             override val message: String = "Password too long [$length/$threshold]"
         ) : PasswordLengthError()
     }
