@@ -9,11 +9,14 @@ import kotlin.reflect.KClass
 
 inline fun <reified T> klog() = KLog(T::class)
 
-class KLog(val caller: KClass<*>) : ccrc.suite.commons.logger.Logger {
+open class KLog(val caller: KClass<*>) : ccrc.suite.commons.logger.Logger {
     override val klog get() = LoggerFactory.getLogger(caller.java)
 
     constructor(caller: Any) : this(caller::class)
 }
+
+class SpekLog(val method: String): KLog(SpekLog::class)
+
 typealias LogLevel = (String) -> Unit
 
 interface Logger {

@@ -1,14 +1,15 @@
-@file:Suppress("unused")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
 package ccrc.suite.lib.process
 
 import arrow.core.*
+import ccrc.suite.commons.DBObject
+import ccrc.suite.commons.ID
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.PerlProcess.ExecutionState
 import ccrc.suite.commons.PerlProcess.ExecutionState.*
 import ccrc.suite.commons.logger.Logger
 import ccrc.suite.commons.utils.uuid
-import ccrc.suite.lib.store.database.DBObject
 import javafx.application.Platform
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleListProperty
@@ -27,7 +28,7 @@ import java.io.File
 import java.lang.System.currentTimeMillis
 import java.util.*
 
-open class ProcessManager(@Id override val id: UUID = uuid) : Logger, Mappable, DBObject {
+open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable, DBObject {
     val queues get() = _queues
     val size get() = queues.map { it.value.size }.sum()
     val next get() = queues[Queued]!!.first
@@ -197,14 +198,14 @@ open class ProcessManager(@Id override val id: UUID = uuid) : Logger, Mappable, 
             val procname = this@ProcessManager.find(processId).getOrElse { null }
 
             this@ProcessManager[processId] =
-                    PerlProcess.ExitCode.fromInt(result.exitValue).state
-                        .also { info { "Found state was [$it] for [$processId][$procname][${result.exitValue}]" } }
+                PerlProcess.ExitCode.fromInt(result.exitValue).state
+                    .also { info { "Found state was [$it] for [$processId][$procname][${result.exitValue}]" } }
         }
 
     }
 
-    class StandardProcessManager(id: UUID = uuid) : ProcessManager(id)
-    class FXProcessManager(id: UUID = uuid) : ProcessManager(id) {
+    class StandardProcessManager(id: UUID = uuid) : ProcessManager(ID(id))
+    class FXProcessManager(id: UUID = uuid) : ProcessManager(ID(id)) {
         val maxProperty = SimpleIntegerProperty(super.max)
         override var max by maxProperty
 
@@ -221,15 +222,6 @@ open class ProcessManager(@Id override val id: UUID = uuid) : Logger, Mappable, 
                 }.toEither { }.mapLeft { info { "Not Found [$processID]" } }
             }
         }
-
-//        override fun removeAll() {
-//            Platform.runLater {  super.removeAll()}
-//        }
-//
-//        override fun remove(processId: UUID): Option<Boolean> {
-//            Platform.runLater { super.remove(processId)}
-//            return Some(true)
-//        }
     }
 
 }

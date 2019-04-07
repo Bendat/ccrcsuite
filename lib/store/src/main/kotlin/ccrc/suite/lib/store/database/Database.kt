@@ -1,6 +1,9 @@
+@file:Suppress("unused")
+
 package ccrc.suite.lib.store.database
 
 import arrow.core.*
+import ccrc.suite.commons.DBObject
 import ccrc.suite.commons.ErrorHandler
 import ccrc.suite.commons.TrackingList
 import ccrc.suite.commons.User
@@ -15,11 +18,7 @@ import org.dizitart.no2.objects.Cursor
 import org.dizitart.no2.objects.ObjectFilter
 import org.dizitart.no2.objects.ObjectRepository
 import java.io.File
-import java.util.*
 
-interface DBObject {
-    val id: UUID
-}
 
 sealed class Database : Logger, ErrorHandler<DBError> {
     abstract val db: Option<Nitrite>
@@ -85,6 +84,7 @@ sealed class Database : Logger, ErrorHandler<DBError> {
 
     class MemoryDatabase : Database() {
         override val db = initAsEither { nitrite { } }
+        @Suppress("ReplaceSingleLineLet")
         override fun deleteDatabase(): Option<Boolean> {
             val db = db
             return when (db) {
@@ -111,7 +111,7 @@ sealed class Database : Logger, ErrorHandler<DBError> {
         private val dbFile = File(directory, name)
         override val db = initAsEither {
             directory.mkdirs()
-            nitrite(user.username, user.password) {
+            nitrite(user.name.value, user.password.value) {
                 file = File(directory, name)
                 autoCommitBufferSize = 2048
                 compress = true

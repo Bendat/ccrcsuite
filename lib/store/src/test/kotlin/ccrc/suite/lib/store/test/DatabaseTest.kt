@@ -1,10 +1,8 @@
 package ccrc.suite.lib.store.test
 
-import arrow.core.Either
 import arrow.core.None
 import arrow.core.Some
-import ccrc.suite.commons.User
-import ccrc.suite.lib.store.database.DBObject
+import ccrc.suite.commons.*
 import ccrc.suite.lib.store.database.Database
 import ccrc.suite.lib.store.database.Database.PersistentDatabase
 import com.github.javafaker.Faker
@@ -19,7 +17,7 @@ import java.util.*
 
 @Testable
 class DatabaseTest : Spek({
-    val to by memoized { TestObject(UUID.randomUUID(), "Paul Peterson") }
+    val to by memoized { TestObject(ID(UUID.randomUUID()), "Paul Peterson") }
     group("In Memory Database Group") {
         val db by memoized { Database.MemoryDatabase() }
         test("Adding TestObject") {
@@ -42,7 +40,7 @@ class DatabaseTest : Spek({
         val userHome = File(System.getProperty("user.home"))
         val dir = File(userHome, "ccrc-test")
         val file by memoized { "db.db" }
-        val user by memoized { User("a@b.com", "12345") }
+        val user by memoized { User(Username("user"), Password("pass1234"), EmailAddress("a@b.com")) }
         val db by memoized { PersistentDatabase(dir, file, user) }
 
         afterEachTest { println(db.deleteDatabase()) }
@@ -70,7 +68,7 @@ class DatabaseTest : Spek({
                 dbfile.exists().should.be.`true`
                 db.close()
                 val db2 = PersistentDatabase(dir, file, user)
-                (db2.db is  Some).should.be.`true`
+                (db2.db is Some).should.be.`true`
             }
 
             test("Opening a Database with Bad Credentials") {
@@ -78,7 +76,7 @@ class DatabaseTest : Spek({
                 db.db.map {}
                 dbfile.exists().should.be.`true`
                 db.close()
-                val db2 = PersistentDatabase(dir, file, User("1", "2"))
+                val db2 = PersistentDatabase(dir, file, User(Username("1234"), Password("1234"), EmailAddress("")))
                 println("Db2 is [${db2.db}]")
                 (db2.db is None).should.be.`true`
             }
@@ -163,6 +161,6 @@ class DatabaseTest : Spek({
 var faker = Faker()
 
 data class TestObject(
-    @Id override val id: UUID = UUID.randomUUID(),
+    @Id override val id: ID = ID(UUID.randomUUID()),
     val name: String = faker.name().fullName()
 ) : DBObject

@@ -24,9 +24,14 @@
         <rxkotlin.version>2.3.0</rxkotlin.version>
         <joda-time.version>2.10.1</joda-time.version>
         <tornadofx.version>1.7.9</tornadofx.version>
+        <nitrite.version>3.2.0</nitrite.version>
         <skipITs>false</skipITs>
     </properties>
     <repositories>
+        <repository>
+            <id>maven-central</id>
+            <url>http://repo1.maven.org/maven2</url>
+        </repository>
         <repository>
             <id>spek-dev</id>
             <url>https://dl.bintray.com/spekframework/spek-dev</url>
@@ -98,4 +103,8 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <build>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
+        <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+    </build>
 </project>

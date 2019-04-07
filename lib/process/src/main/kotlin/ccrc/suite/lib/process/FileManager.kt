@@ -1,3 +1,5 @@
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+
 package ccrc.suite.lib.process
 
 import arrow.core.Either
@@ -23,7 +25,7 @@ class FileManager(path: String) {
                 userFolders[user] = File(file, "${process.name}-${process.id}")
                 userFolders[user]?.mkdirs()
             } else {
-                val file = File(processFolder, user.username)
+                val file = File(processFolder, user.name.value)
                 createUserSubdirectory(user, file, process)
             }
             userFolders[user]!!
@@ -40,6 +42,8 @@ class FileManager(path: String) {
     }
 }
 
-sealed class FileError(val message: Any?) {
-    class CreateFolderError(message: Any?) : FileError(message)
+sealed class FileError {
+    abstract val message: Any?
+
+    data class CreateFolderError(override val message: Any?) : FileError()
 }
