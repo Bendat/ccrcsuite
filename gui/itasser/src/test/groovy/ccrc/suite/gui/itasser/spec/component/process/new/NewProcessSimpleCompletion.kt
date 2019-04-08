@@ -1,7 +1,7 @@
-package ccrc.suite.gui.itasser.spec.views.process.new
+package ccrc.suite.gui.itasser.spec.component.process.new
 
 import ccrc.suite.commons.utils.safeWait
-import ccrc.suite.gui.itasser.views.ProcessesView.NewProcessWizard
+import ccrc.suite.gui.itasser.component.process.views.ProcessesView.NewProcessWizard
 import javafx.scene.Scene
 import javafx.stage.Stage
 import javafx.stage.StageStyle

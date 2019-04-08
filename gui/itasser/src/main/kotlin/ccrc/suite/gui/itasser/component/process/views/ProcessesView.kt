@@ -1,10 +1,10 @@
 @file:Suppress("RedundantLambdaArrow")
 
-package ccrc.suite.gui.itasser.views
+package ccrc.suite.gui.itasser.component.process.views
 
 import ccrc.suite.commons.Parameter
 import ccrc.suite.commons.logger.Logger
-import ccrc.suite.gui.itasser.controllers.ProcessViewController
+import ccrc.suite.gui.itasser.component.process.controllers.ProcessViewController
 import ccrc.suite.lib.process.ProcessManager
 import ccrc.suite.lib.process.ProcessQueue
 import ccrc.suite.lib.process.Wrapper

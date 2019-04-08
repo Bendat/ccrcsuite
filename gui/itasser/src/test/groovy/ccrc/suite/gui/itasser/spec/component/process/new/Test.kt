@@ -1,9 +1,9 @@
-package ccrc.suite.gui.itasser.spec.views.process.new
+package ccrc.suite.gui.itasser.spec.component.process.new
 
 import ccrc.suite.commons.logger.Logger
 import ccrc.suite.commons.utils.safeWait
 import ccrc.suite.gui.itasser.Styles
-import ccrc.suite.gui.itasser.views.ProcessesView
+import ccrc.suite.gui.itasser.component.process.views.ProcessesView
 import ccrc.suite.lib.process.ArgNames
 import javafx.stage.Stage
 import javafx.stage.StageStyle

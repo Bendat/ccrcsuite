@@ -1,4 +1,4 @@
-package ccrc.suite.gui.itasser.spec.install.wizard.wizard
+package ccrc.suite.gui.itasser.spec.install.wizard
 
 import ccrc.suite.commons.logger.KLog
 import ccrc.suite.commons.logger.Logger

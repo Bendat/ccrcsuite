@@ -10,6 +10,11 @@ class TrackingList<T>: SimpleListProperty<TrackedItem<T>>(FXCollections.observab
     }
 
     operator fun plusAssign(item: T) = add(item)
+    override fun toString(): String {
+        val str = joinToString (separator = ", ")
+        return "TrackingList{$str})"
+    }
+
 }
 data class TrackedItem<T>(
     val item: T,

@@ -1,6 +1,6 @@
 package ccrc.suite.gui.itasser
 
-import ccrc.suite.gui.itasser.views.MainView
+import ccrc.suite.gui.itasser.component.main.views.MainView
 import javafx.application.Application
 import tornadofx.App
 

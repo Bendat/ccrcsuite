@@ -1,4 +1,4 @@
-package ccrc.suite.gui.itasser.spec.install.wizard.wizard
+package ccrc.suite.gui.itasser.spec.install.wizard
 
 import ccrc.suite.gui.itasser.test.apps.WizardApp
 import com.github.javafaker.Faker

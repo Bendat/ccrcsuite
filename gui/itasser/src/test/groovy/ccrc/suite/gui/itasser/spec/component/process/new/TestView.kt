@@ -1,4 +1,4 @@
-package ccrc.suite.gui.itasser.spec.views.process.new
+package ccrc.suite.gui.itasser.spec.component.process.new
 
 import javafx.scene.control.Button
 import tornadofx.*

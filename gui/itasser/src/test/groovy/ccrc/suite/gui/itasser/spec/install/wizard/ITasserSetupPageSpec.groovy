@@ -1,4 +1,4 @@
-package ccrc.suite.gui.itasser.spec.install.wizard.wizard
+package ccrc.suite.gui.itasser.spec.install.wizard
 
 import ccrc.suite.gui.itasser.test.apps.WizardApp
 import com.github.javafaker.Faker
@@ -22,14 +22,13 @@ class ITasserSetupPageTestSpec extends GuiSpec {
     @Override
     void start(Stage stage) {
         app = new WizardApp()
-        if (this.stage == null) {
-            FxToolkit.registerPrimaryStage()
-            FxToolkit.setupFixture {
-                this.stage = new Stage(StageStyle.UNIFIED)
-                app.start(stage)
-                stage.show()
-            }
+        FxToolkit.registerPrimaryStage()
+        FxToolkit.setupFixture {
+            this.stage = new Stage(StageStyle.UNIFIED)
+            app.start(stage)
+            stage.show()
         }
+
     }
 
 

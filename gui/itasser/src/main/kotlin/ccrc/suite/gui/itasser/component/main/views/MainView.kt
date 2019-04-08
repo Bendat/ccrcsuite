@@ -1,4 +1,4 @@
-package ccrc.suite.gui.itasser.views
+package ccrc.suite.gui.itasser.component.main.views
 
 import ccrc.suite.gui.itasser.Styles
 import javafx.scene.control.Alert.AlertType.INFORMATION

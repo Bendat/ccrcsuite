@@ -1,4 +1,4 @@
-package ccrc.suite.gui.itasser.spec.install.wizard.wizard
+package ccrc.suite.gui.itasser.spec.install.wizard
 
 import arrow.core.Either
 import ccrc.suite.gui.itasser.settings.GuiDB

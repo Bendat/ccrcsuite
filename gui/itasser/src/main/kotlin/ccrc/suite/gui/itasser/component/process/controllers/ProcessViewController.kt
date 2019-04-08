@@ -1,8 +1,8 @@
-package ccrc.suite.gui.itasser.controllers
+package ccrc.suite.gui.itasser.component.process.controllers
 
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.utils.uuid
-import ccrc.suite.gui.itasser.views.ProcessesView
+import ccrc.suite.gui.itasser.component.process.views.ProcessesView
 import ccrc.suite.lib.process.ArgNames
 import ccrc.suite.lib.process.ProcessManager
 import ccrc.suite.lib.process.ProcessManager.FXProcessManager

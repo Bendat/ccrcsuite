@@ -33,6 +33,7 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
     val size get() = queues.map { it.value.size }.sum()
     val next get() = queues[Queued]!!.first
     val running get() = queues[Running]?.size ?: 0
+    val defaultArgs = arrayOf("perl", ArgNames.AutoFlush.toString())
     open var max = 3
     @get:Synchronized
     @set:Synchronized
@@ -89,12 +90,14 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
         args: List<String>,
         createdBy: UUID
     ): UUID {
+        val a = arrayListOf(* defaultArgs)
+        a.addAll(args)
         val runner = ProcessRunner(
             ITasserProcess(
                 id = processId,
                 seq = seqFile,
                 name = name,
-                args = args,
+                args = a,
                 createdAt = currentTimeMillis(),
                 createdBy = createdBy,
                 state = Queued
@@ -164,6 +167,9 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
     operator fun get(queue: ExecutionState, processId: UUID) =
         queues[queue]?.first { it.runner.process.id == processId }.toOption()
 
+    operator fun get(processId: UUID) =
+        queues.flatMap { it.value }.map { it }.first { it.runner.process.id == processId }.toOption()
+
 
     open operator fun set(processId: UUID, queue: ExecutionState) {
         find(processId).map { p ->
@@ -231,6 +237,7 @@ data class Wrapper(
     val priority: Int,
     val state: ExecutionState
 ) {
+
     override fun toString(): String {
         return "[$priority][$state][${runner.process}]"
     }

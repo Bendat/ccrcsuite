@@ -133,7 +133,7 @@ private fun getProcess(file: String): ITasserProcess {
 }
 
 
-private fun processListener(exitCode: Int): ProcessListener {
+fun processListener(exitCode: Int): ProcessListener {
     return listener {
         afterFinish { _, it2 ->
             it2.exitValue.should.equal(exitCode)
