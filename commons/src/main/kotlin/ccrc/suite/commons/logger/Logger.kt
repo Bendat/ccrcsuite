@@ -68,6 +68,6 @@ interface Logger {
         )//.substring(0, min(3000, msg.toString().length))
         else msg
 
-        logtype(sb.toString())
+        logtype(msg.toString())
     }
 }

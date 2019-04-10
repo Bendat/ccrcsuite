@@ -22,7 +22,6 @@ class ProcessConsoleViewController : Logger {
     init {
         processProperty.onChange {
             info { "Property changed [${it?.std?.output}]" }
-            seqData = process.seq
         }
     }
 //    val text by process.std.output
