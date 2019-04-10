@@ -12,6 +12,8 @@ inline class Password(val value: String) {
     val hashed get() = Password(BCrypt.hashpw(value, BCrypt.gensalt(10))).also{
         KLog(Password::class).info{"Hashing [$value] to [$it]"}
     }
+
+    val isValid get() = value.validPassword()
 }
 
 inline class EmailAddress(val value: String) {
@@ -42,7 +44,7 @@ data class User(
         password: String,
         email: String,
         id: UUID = uuid,
-        bool: Boolean = true
+        @Suppress("UNUSED_PARAMETER") bool: Boolean = true
     ) : this(Username(name), Password(password), EmailAddress(email), ID(id))
 }
 

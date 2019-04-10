@@ -1,6 +1,5 @@
 package ccrc.suite.gui.itasser.spec.component.console
 
-
 import ccrc.suite.gui.itasser.component.console.controllers.ProcessConsoleViewController
 import ccrc.suite.gui.itasser.spec.install.wizard.GuiSpec
 import ccrc.suite.gui.itasser.test.apps.ConsoleApp
@@ -8,7 +7,6 @@ import com.github.javafaker.Faker
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 import org.testfx.api.FxToolkit
-
 import static ccrc.suite.commons.utils.SafeWaitKt.safeWait
 
 class ConsoleSpec extends GuiSpec {
@@ -33,32 +31,37 @@ class ConsoleSpec extends GuiSpec {
         app.stop()
     }
 
-    void "We run a process and observe its output"() {
+    void "We verify that output is correctly written to "() {
         given:
         def file = this.class.getResource("/Lorem.pl").file
         def args = new ArrayList<String>()
         def controller = new ProcessConsoleViewController()
         controller.text.item.add("Hello")
-
         args += file
         def process
-
+        
         interact {
             app.model.item = controller
-            process = app.pm.new(UUID.randomUUID(), 0, new File(file), "Test Process", args, UUID.randomUUID())
-            app.pm.run(process)
-            def proc = app.pm.get(process)
-            proc.map {
-                controller.process = it.runner
-            }
-            info("Apping app")
-            info(app.model.text.value)
+            process = app.pm.new(
+                    UUID.randomUUID(),
+                    0,
+                    new File(file),
+                    "Test Process",
+                    args,
+                    UUID.randomUUID()
+            )
         }
 
-        expect:
-   
-        safeWait(10000)
+        when:
+        interact {
+            app.pm.run(process)
+            def proc = app.pm.get(process)
+            proc.map { controller.process = it.runner }
+        }
 
+        then:
+        safeWait(1000)
+        interact { app.model.text.size() > 100 }
     }
 }
 

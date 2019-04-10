@@ -34,6 +34,7 @@ class ProcessRunner(
     var future: Option<Future<ProcessResult>> = None
 
     val std = STD()
+
     private val processExecutor: ProcessExecutor = ProcessExecutor()
         .command(process.args).readOutput(true).addListener(listener)
 
@@ -57,28 +58,32 @@ class ProcessRunner(
     }
 
     fun await(): Option<ProcessResult> = realProcess.flatMap { p ->
-        Try { p.future.get() }.toEither()
+        Try { p.future.get() }
+            .toEither()
             .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
             .toOption()
     }
 
 
     fun await(timeout: Long): Option<ProcessResult> = realProcess.flatMap { p ->
-        Try { p.future.get(timeout, MILLISECONDS) }.toEither()
+        Try { p.future.get(timeout, MILLISECONDS) }
+            .toEither()
             .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
             .toOption()
     }
 
 
     fun stop(): Option<ProcessRunner> = sysProcess.flatMap { p ->
-        Try { destroyGracefullyAndWait(p, 10, SECONDS) }.toEither()
+        Try { destroyGracefullyAndWait(p, 10, SECONDS) }
+            .toEither()
             .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
             .map { this }.toOption()
     }
 
 
     fun destroy(): Option<ProcessRunner> = sysProcess.flatMap { p ->
-        Try { destroyForcefullyAndWait(p) }.toEither()
+        Try { destroyForcefullyAndWait(p) }
+            .toEither()
             .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
             .map { this }.toOption()
     }

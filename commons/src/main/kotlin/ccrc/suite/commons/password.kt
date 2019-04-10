@@ -13,7 +13,6 @@ fun String.validPassword(
     capitals: Boolean = true,
     specials: Boolean = true
 ): Validated<BadPassword, String> = when {
-
     length > maxLength ->
         Invalid(LongPassword(length, maxLength))
     length < minLength ->
@@ -35,7 +34,7 @@ typealias MissingCharset = PasswordValidationError.SpecialCharsMissingError
 typealias MissingUpper = PasswordValidationError.MissingUppercaseChars
 typealias MissingLower = PasswordValidationError.MissingLowercaseChars
 
-sealed class PasswordValidationError() {
+sealed class PasswordValidationError {
     abstract val message: Any?
 
     sealed class PasswordLengthError : PasswordValidationError() {

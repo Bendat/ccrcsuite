@@ -28,7 +28,6 @@ class ITasserSetupPageTestSpec extends GuiSpec {
             app.start(stage)
             stage.show()
         }
-
     }
 
 

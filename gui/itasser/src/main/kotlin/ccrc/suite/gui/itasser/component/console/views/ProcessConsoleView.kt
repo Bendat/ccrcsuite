@@ -9,7 +9,9 @@ class ProcessConsoleView : View("Process Output Console"), Logger {
     override val root = vbox {
         vbox {
             textarea {
+                isEditable = false
                 model.consoleTextArea = this
+                cssclass("console")
             }
             textfield { }
         }
