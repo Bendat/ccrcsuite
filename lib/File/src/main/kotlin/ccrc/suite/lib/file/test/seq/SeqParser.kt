@@ -13,6 +13,9 @@ object SeqParser : Logger {
         var line: String? = reader.readLine()
         val body: ArrayList<String> = arrayListOf()
         val seqs = arrayListOf<SequenceWrapper>()
+        line?.let{
+
+        }
         while (line != null) {
             debug { "Parsing all" }
             var des: String? = null

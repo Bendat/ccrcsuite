@@ -36,8 +36,8 @@ object ParserTests : Spek({
             And("Its body should be correct") {
                 read[0].body.value.should.equal(single.filter { it != '\n' })
             }
-
         }
+        
         Scenario("We want to break ensure validation fails correctly") {
             lateinit var seqfasta: File
             lateinit var read: SeqFile
@@ -54,7 +54,7 @@ object ParserTests : Spek({
                 read.size.should.equal(1)
             }
 
-            And("The description should be 'Hello Fasta'") {
+            And("The description should be 'BAD SEQUENCE'") {
                 read[0].description.should.equal("BAD SEQUENCE")
             }
 
@@ -68,7 +68,6 @@ object ParserTests : Spek({
         }
 
         Scenario("I want deserialize a 'fasta' file into its sequences") {
-
             lateinit var seqfasta: File
             lateinit var read: SeqFile
 
