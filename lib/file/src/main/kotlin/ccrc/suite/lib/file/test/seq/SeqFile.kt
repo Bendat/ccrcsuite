@@ -1,31 +1,32 @@
 package ccrc.suite.lib.file.test.seq
 
-import arrow.data.Invalid
 import arrow.data.Validated
-import ccrc.suite.commons.BadChar
-import ccrc.suite.commons.Error
+import ccrc.suite.commons.Error.SequenceError.ParseError
 
 typealias  Validated = Validated.Valid<True>
 
-data class SeqFile(val sequences: List<SequenceWrapper>) {
+data class SeqFile(val sequences: List<Sequence>) {
     val size get() = sequences.size
-    operator fun get(index: Int): SequenceWrapper {
+    operator fun get(index: Int): Sequence{
         return sequences[index]
     }
 }
 
-data class SequenceWrapper(val description: String, val body: Sequence)
+data class Sequence(val description: String, val body: SequenceChain)
 
-inline class Sequence(val value: String) {
-    val size get() = value.length
-    val isValid get() = mapValidity()
 
-    private fun mapValidity(): Validated<Error.SequenceError, True> {
-        val badChars = value.toSet().minus(AminoAcids.values().map { it.code }.toSet())
-        return when (badChars.any()) {
-            true -> Invalid(BadChar("The sequence contains invalid characters [$badChars]"))
-            false -> Validated.Valid(True)
-        }
+
+sealed class SequenceChain {
+    abstract val chain: String
+
+    data class ValidSequenceChain(override val chain: String) : SequenceChain()
+    data class InvalidSequenceChain(
+        override val chain: String,
+        val errors: ParseError
+    ) : SequenceChain()
+
+    class EmptySequenceChain() : SequenceChain() {
+        override val chain: String = "==This Chain Has No Body=="
     }
 }
 

@@ -104,7 +104,7 @@ class ProcessesView(manager: ProcessManager) : View("Process List"), Logger {
         }
 
         override val root = form {
-            fieldset("Sequence Info") {
+            fieldset("SequenceChain Info") {
                 field("Seq File ") {
                     textfield(model.name) {
                         addClass("name-field-new-process")
@@ -113,7 +113,7 @@ class ProcessesView(manager: ProcessManager) : View("Process List"), Logger {
                         }
                     }//.required()
                 }
-                field("Sequence Name") {
+                field("SequenceChain Name") {
                     textfield(model.file) {
                         addClass("file-field-new-process")
                         setOnMouseClicked {

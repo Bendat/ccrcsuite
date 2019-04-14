@@ -19,7 +19,6 @@ class ProcessConsoleViewViewModel(controller: ProcessConsoleViewController = Pro
         it.onChange {
             consoleTextArea.bind(item.process.std.output, converter = converter)
             seqData.value = SeqParser.parse(item.process.process.seq).sequences.firstOrNull()?.body?.value
-
         }
     }
 
