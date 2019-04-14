@@ -1,5 +1,6 @@
 package ccrc.suite.lib.file.test.seq
 
+import ccrc.suite.commons.extensions.isFalse
 import ccrc.suite.commons.logger.Logger
 import java.io.BufferedReader
 import java.io.File
@@ -13,11 +14,10 @@ object SeqParser : Logger {
         var line: String? = reader.readLine()
         val body: ArrayList<String> = arrayListOf()
         val seqs = arrayListOf<SequenceWrapper>()
-        line?.let{
-
-        }
-        while (line != null) {
-            debug { "Parsing all" }
+        var first = true
+        while (line != null && first.isFalse) {
+            first = false
+            debug { "Parsing all [$line]" }
             var des: String? = null
             if (line.startsWith(">")) {
                 des = line

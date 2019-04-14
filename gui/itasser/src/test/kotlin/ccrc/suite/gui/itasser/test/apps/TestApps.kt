@@ -6,6 +6,7 @@ import ccrc.suite.commons.logger.Logger
 import ccrc.suite.gui.itasser.Styles
 import ccrc.suite.gui.itasser.component.console.viewmodels.ProcessConsoleViewViewModel
 import ccrc.suite.gui.itasser.component.console.views.ProcessConsoleView
+import ccrc.suite.gui.itasser.proxy.controller.ProcessManagerController
 import ccrc.suite.gui.itasser.settings.GuiDB
 import ccrc.suite.gui.itasser.wizards.install.InstallWizard
 import ccrc.suite.lib.process.ProcessManager
@@ -21,6 +22,7 @@ class TestApp<T : UIComponent>(type: Class<T>) : App(type.kotlin, Styles::class)
 class WizardApp : App(InstallWizard::class), Logger {
     val root by inject<InstallWizard>()
     val db by lazy { GuiDB }
+    val pm by inject<ProcessManagerController>()
 
     fun dbStart(): Either<TrackingList<DBError>, Database> {
         val faker = Faker()

@@ -16,6 +16,10 @@ class ConsoleSpec extends GuiSpec {
 
     @Override
     void start(Stage stage) throws Exception {
+        System.setProperty("testfx.robot", "glass");
+        System.setProperty("testfx.headless", "true");
+        System.setProperty("prism.order", "sw");
+        System.setProperty("prism.text", "t2k");
         app = new ConsoleApp()
         FxToolkit.registerPrimaryStage()
         FxToolkit.setupFixture {
@@ -34,12 +38,13 @@ class ConsoleSpec extends GuiSpec {
     void "We verify that output is correctly written to "() {
         given:
         def file = this.class.getResource("/Lorem.pl").file
-        def args = new ArrayList<String>()
+        def seq = this.class.getResource("/single.fasta").file
+        def processArgs = new ArrayList<String>()
         def controller = new ProcessConsoleViewController()
-        controller.text.item.add("Hello")
-        args += file
+
+        processArgs += file
         def process
-        
+
         interact {
             app.model.item = controller
             process = app.pm.new(
@@ -47,7 +52,7 @@ class ConsoleSpec extends GuiSpec {
                     0,
                     new File(file),
                     "Test Process",
-                    args,
+                    processArgs,
                     UUID.randomUUID()
             )
         }
@@ -56,12 +61,16 @@ class ConsoleSpec extends GuiSpec {
         interact {
             app.pm.run(process)
             def proc = app.pm.get(process)
+            safeWait(500)
             proc.map { controller.process = it.runner }
         }
 
         then:
-        safeWait(1000)
-        interact { app.model.text.size() > 100 }
+        safeWait(2000)
+        interact {
+            info("Console text is")
+            info(app.model.consoleText.size())
+            app.model.consoleText.size() > 100
+        }
     }
 }
-

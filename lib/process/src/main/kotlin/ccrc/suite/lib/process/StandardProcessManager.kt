@@ -7,7 +7,8 @@ import ccrc.suite.commons.DBObject
 import ccrc.suite.commons.ID
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.PerlProcess.ExecutionState
-import ccrc.suite.commons.PerlProcess.ExecutionState.*
+import ccrc.suite.commons.PerlProcess.ExecutionState.Queued
+import ccrc.suite.commons.PerlProcess.ExecutionState.Running
 import ccrc.suite.commons.logger.Logger
 import ccrc.suite.commons.utils.uuid
 import javafx.application.Platform
@@ -39,12 +40,12 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
     @set:Synchronized
     @Volatile
     private var _queues: MutableMap<ExecutionState, ProcessQueue> =
-        SimpleMapProperty<ExecutionState, ProcessQueue>(FXCollections.observableHashMap()).apply {
-            put(Completed, ProcessQueue())
-            put(Paused, ProcessQueue())
-            put(Running, ProcessQueue())
-            put(Failed, ProcessQueue())
-            put(Queued, ProcessQueue())
+        SimpleMapProperty<ExecutionState, ProcessQueue>(
+            FXCollections.observableHashMap()
+        ).apply {
+            ExecutionState.values().forEach { state ->
+                put(state, ProcessQueue())
+            }
         }
 
     val exitCodes = hashMapOf<UUID, Int>()
@@ -112,7 +113,7 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
     }
 
     open fun remove(processId: UUID): Option<Boolean> {
-        stop(processId)
+        pause(processId)
         return findQueue(processId)
             .flatMap { q -> find(processId).map { q.remove(it) } }
     }
@@ -128,9 +129,7 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
         queues.map { entry -> entry.value.firstOrNull { it.runner.process.id == processId } }
             .map { it?.runner?.start() }.firstOrNull().toOption()
 
-    fun stop(processId: UUID) {
-        find(processId).flatMap { it.runner.stop() }
-    }
+    fun pause(processId: UUID): Option<ProcessRunner> = find(processId).flatMap { it.runner.stop() }
 
     fun shutdown(onStopped: (PerlProcess) -> Unit = {}) {
         queues.flatMap { it.value }.forEach {
@@ -167,8 +166,9 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
     operator fun get(queue: ExecutionState, processId: UUID) =
         queues[queue]?.first { it.runner.process.id == processId }.toOption()
 
-    operator fun get(processId: UUID) =
-        queues.flatMap { it.value }.map { it }.first { it.runner.process.id == processId }.toOption()
+    operator fun get(processId: UUID) = queues.flatMap { it.value }
+        .first { it.runner.process.id == processId }
+        .toOption()
 
 
     open operator fun set(processId: UUID, queue: ExecutionState) {
@@ -199,7 +199,6 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
         }
 
         override fun afterFinish(process: Process, result: ProcessResult) {
-            info { "Result is [${result.output.lines.joinToString(",\n")}]" }
             exitCodes[processId] = result.exitValue
             val procname = this@ProcessManager.find(processId).getOrElse { null }
 
@@ -225,7 +224,7 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
                 find(processID).map {
                     info { "Found [$state][$processID" }
                     this[it.runner.process.id] = state
-                }.toEither { }.mapLeft { info { "Not Found [$processID]" } }
+                }.toEither { warn { "Not Found [$processID]" } }
             }
         }
     }
