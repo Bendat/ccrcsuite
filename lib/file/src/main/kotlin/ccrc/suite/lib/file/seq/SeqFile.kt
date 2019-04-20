@@ -1,20 +1,13 @@
-package ccrc.suite.lib.file.test.seq
+package ccrc.suite.lib.file.seq
 
-import arrow.data.Validated
 import ccrc.suite.commons.Error.SequenceError.ParseError
+import ccrc.suite.commons.utils.uuid
+import java.util.*
 
-typealias  Validated = Validated.Valid<True>
+typealias SeqFile = List<Sequence>
 
-data class SeqFile(val sequences: List<Sequence>) {
-    val size get() = sequences.size
-    operator fun get(index: Int): Sequence{
-        return sequences[index]
-    }
-}
 
 data class Sequence(val description: String, val body: SequenceChain)
-
-
 
 sealed class SequenceChain {
     abstract val chain: String
@@ -22,15 +15,33 @@ sealed class SequenceChain {
     data class ValidSequenceChain(override val chain: String) : SequenceChain()
     data class InvalidSequenceChain(
         override val chain: String,
-        val errors: ParseError
+        val error: ParseError
     ) : SequenceChain()
 
-    class EmptySequenceChain() : SequenceChain() {
+    data class EmptySequenceChain(val id: UUID = uuid) : SequenceChain() {
         override val chain: String = "==This Chain Has No Body=="
+        override fun toString(): String {
+            return "EmptySequenceChain(chain='$chain')"
+        }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SequenceChain
+
+        if (chain != other.chain) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return chain.hashCode()
+    }
+
 }
 
-object True
 enum class AminoAcids(val code: Char, val abbreviation: String, val aminoacid: String) {
     A('A', "ALA", "alanine"),
     B('B', "ASX", "asparagine"),

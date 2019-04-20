@@ -1,5 +1,7 @@
 package ccrc.suite.commons
 
+import java.io.File
+
 typealias BadYaml = Error.BadYamlError
 typealias ApiFailure = Error.ApiFailureError
 typealias BadInitError = Error.BadInitialization
@@ -24,7 +26,7 @@ sealed class Error {
         sealed class ParseError : SequenceError() {
             data class InvalidCharError(
                 override val message: Any?,
-                val sequence: String,
+                val sequence: String?,
                 val badChars: Set<Char>
             ) : ParseError()
 
@@ -36,7 +38,11 @@ sealed class Error {
         }
 
         sealed class IOError : SequenceError() {
-            data class FileReadError(override val message: Any?) : IOError()
+            data class FileReadError(
+                val file: File,
+                override val message: Any?
+            ) : IOError()
+
             data class NoStartingDescriptionError(override val message: Any?) : IOError()
             data class EmptyFileError(override val message: Any?) : IOError()
         }

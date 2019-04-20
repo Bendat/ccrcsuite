@@ -3,7 +3,7 @@ package ccrc.suite.gui.itasser.component.console.viewmodels
 import ccrc.suite.commons.TrackedItem
 import ccrc.suite.commons.logger.Logger
 import ccrc.suite.gui.itasser.component.console.controllers.ProcessConsoleViewController
-import ccrc.suite.lib.file.test.seq.SeqParser
+import ccrc.suite.lib.file.seq.SeqParser
 import javafx.collections.ObservableList
 import javafx.scene.control.TextArea
 import javafx.util.StringConverter
@@ -18,7 +18,9 @@ class ProcessConsoleViewViewModel(controller: ProcessConsoleViewController = Pro
     val process = bind(ProcessConsoleViewController::processProperty, autocommit = true).also {
         it.onChange {
             consoleTextArea.bind(item.process.std.output, converter = converter)
-            seqData.value = SeqParser.parse(item.process.process.seq).sequences.firstOrNull()?.body?.value
+            SeqParser.parse(item.process.process.seq).map { seqFile ->
+                seqData.value = seqFile.firstOrNull()?.body?.chain
+            }
         }
     }
 
