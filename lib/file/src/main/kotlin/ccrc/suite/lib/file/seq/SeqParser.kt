@@ -19,7 +19,13 @@ import java.io.File
  */
 object SeqParser : Logger {
 
-    fun parse(file: File): Either<IOError, SeqFile> = SeqParser.parse(file.readLines())
+    fun parse(file: File): Either<IOError, SeqFile> {
+        return if (!file.exists() || !file.isFile) {
+            Left(IOError.FileReadError(file, "File: exists[$${file.exists()}]; isFile[${file.isFile}]"))
+        } else {
+            SeqParser.parse(file.readLines())
+        }
+    }
 
     fun parse(input: List<String>?): Either<IOError, SeqFile> {
         return if (input == null || input.isEmpty()) Left(EmptyFile("The input data was null"))
@@ -69,15 +75,6 @@ object SeqParser : Logger {
         )
     }
 
-
-    private fun verifyFirstLine(line: String?, filename: String): Option<IOError> {
-        return when {
-            line == null -> Some(EmptyFile("File [$filename] has no contents"))
-            line.startsWith(">").isFalse -> Some(NoStartingHeader("File [$filename] does not start with '>' : [$line]"))
-            else -> None
-        }
-    }
-
     internal fun mapCharValidity(value: String?): Option<BadChar> {
         val badChars = value
             ?.trim()
@@ -89,4 +86,11 @@ object SeqParser : Logger {
         }
     }
 
+    private fun verifyFirstLine(line: String?, filename: String): Option<IOError> {
+        return when {
+            line == null -> Some(EmptyFile("File [$filename] has no contents"))
+            line.startsWith(">").isFalse -> Some(NoStartingHeader("File [$filename] does not start with '>' : [$line]"))
+            else -> None
+        }
+    }
 }

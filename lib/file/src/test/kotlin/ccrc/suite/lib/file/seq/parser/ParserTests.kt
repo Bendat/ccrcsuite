@@ -603,6 +603,7 @@ object ParserTests : Spek({
                 seqFile[1].body.chain.should.equal("CCACTGCACTCACCGCACCCGGCCAATTTTTGTGTTTTTAGTAGAGACTAAATACCATATAGTGAACACCTAAGA")
             }
         }
+
         describe("Empty Second Body Fasta") {
             val file = ">HSBGPG Human gene for bone gla protein (BGP)\n\n>HSGLTH1 Human theta 1-globin gene\nCCACTGCACTCACCGCACCCGGCCAATTTTTGTGTTTTTAGTAGAGACTAAATACCATATAGTGAACACCTAAGA"
             lateinit var parsed: Either<IOError, SeqFile>

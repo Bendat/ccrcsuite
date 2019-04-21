@@ -11,6 +11,7 @@ data class Sequence(val description: String, val body: SequenceChain)
 
 sealed class SequenceChain {
     abstract val chain: String
+    val id: UUID = uuid
 
     data class ValidSequenceChain(override val chain: String) : SequenceChain()
     data class InvalidSequenceChain(
@@ -18,7 +19,7 @@ sealed class SequenceChain {
         val error: ParseError
     ) : SequenceChain()
 
-    data class EmptySequenceChain(val id: UUID = uuid) : SequenceChain() {
+    class EmptySequenceChain : SequenceChain() {
         override val chain: String = "==This Chain Has No Body=="
         override fun toString(): String {
             return "EmptySequenceChain(chain='$chain')"
