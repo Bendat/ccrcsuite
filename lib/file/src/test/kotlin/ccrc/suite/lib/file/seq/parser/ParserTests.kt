@@ -8,7 +8,6 @@ import ccrc.suite.commons.BadChar
 import ccrc.suite.commons.EmptyFile
 import ccrc.suite.commons.Error
 import ccrc.suite.commons.Error.SequenceError.IOError
-import ccrc.suite.commons.extensions.flattened
 import ccrc.suite.commons.extensions.remove
 import ccrc.suite.commons.extensions.type
 import ccrc.suite.commons.utils.uuid
@@ -206,7 +205,7 @@ object ParserTests : Spek({
                 val fasta = ">title 1\nAAGGCC"
                 lateinit var sequences: List<Sequence>
                 it("Should parse the fasta") {
-                    sequences = SeqParser.x(fasta).toList()
+                    sequences = SeqParser.mapDescriptionToBodies(fasta).toList()
                     print(sequences)
                 }
 
@@ -230,7 +229,7 @@ object ParserTests : Spek({
                 val fasta = ">title 1\nAAGGCC\nBCGA"
                 lateinit var sequences: List<Sequence>
                 it("Should parse the fasta") {
-                    sequences = SeqParser.x(fasta).toList()
+                    sequences = SeqParser.mapDescriptionToBodies(fasta).toList()
                     print(sequences)
                 }
 
@@ -255,7 +254,7 @@ object ParserTests : Spek({
                 val fasta = ">title 1\nAAGGCC\n>2\nBBGGCC"
                 lateinit var sequences: List<Sequence>
                 it("Should parse the fasta") {
-                    sequences = SeqParser.x(fasta).toList()
+                    sequences = SeqParser.mapDescriptionToBodies(fasta).toList()
                 }
 
                 it("Should verify the size of the result") {
@@ -283,7 +282,7 @@ object ParserTests : Spek({
                 val fasta = ">title 1\nAAGGCC\nGGGEEE\n>2\nBBGGCCG\nGGHHH"
                 lateinit var sequences: List<Sequence>
                 it("Should parse the fasta") {
-                    sequences = SeqParser.x(fasta).toList()
+                    sequences = SeqParser.mapDescriptionToBodies(fasta).toList()
                     print(sequences)
                 }
 
@@ -316,7 +315,7 @@ object ParserTests : Spek({
                 val fasta = ""
                 lateinit var sequences: List<Sequence>
                 it("Should parse the fasta") {
-                    sequences = SeqParser.x(fasta).toList()
+                    sequences = SeqParser.mapDescriptionToBodies(fasta).toList()
                 }
 
                 it("Should verify the size of the result") {
@@ -523,14 +522,12 @@ object ParserTests : Spek({
         }
     }
 
-    group("Multi-Sequence Fasta File Tests") {
+    group("Parser test") {
         describe("Valid Multi Sequence Fasta") {
-            val file = valid2PartSequence
+            val file = ">HSBGPG Human gene for bone gla protein (BGP)\nGGCAGATTCCCCCTAGACCCGCCCGCACCATGGTCAGGCATGCCCCTCCTCATCGCTGGGCACAGCCCAGAGGGT\n>HSGLTH1 Human theta 1-globin gene\nCCACTGCACTCACCGCACCCGGCCAATTTTTGTGTTTTTAGTAGAGACTAAATACCATATAGTGAACACCTAAGA"
             lateinit var parsed: Either<IOError, SeqFile>
             lateinit var seqFile: SeqFile
-            lateinit var sequences: List<SequenceChain.ValidSequenceChain>
             it("Should to parse the file [$file]") {
-                println(file)
                 parsed = SeqParser.parse(file)
             }
 
@@ -549,26 +546,96 @@ object ParserTests : Spek({
             }
 
             it("Should verify the first description") {
-                seqFile.first().description.should.equal(valid2PartHeader1.remove(">"))
+                seqFile.first().description.should.equal(">HSBGPG Human gene for bone gla protein (BGP)")
             }
             it("Should verify the first body") {
                 println(seqFile.first().body.chain)
-                seqFile.first().body.chain.should.equal(validBody.flattened)
+                seqFile.first().body.chain.should.equal("GGCAGATTCCCCCTAGACCCGCCCGCACCATGGTCAGGCATGCCCCTCCTCATCGCTGGGCACAGCCCAGAGGGT")
             }
 
             it("Should verify the first description") {
-                seqFile[1].description.should.equal(valid2PartHeader2.remove(">"))
+                seqFile[1].description.should.equal(">HSGLTH1 Human theta 1-globin gene")
             }
 
             it("Should verify the first description") {
-                seqFile[1].body.chain.should.equal(validBody.flattened)
+                seqFile[1].body.chain.should.equal("CCACTGCACTCACCGCACCCGGCCAATTTTTGTGTTTTTAGTAGAGACTAAATACCATATAGTGAACACCTAAGA")
             }
         }
         describe("Invalid Multi Sequence Fasta") {
-            TODO()
+            val file = ">HSBGPG Human gene for bone gla protein (BGP)\nGGCAGA'T\n>HSGLTH1 Human theta 1-globin gene\nCCACTGCACTCACCGCACCCGGCCAATTTTTGTGTTTTTAGTAGAGACTAAATACCATATAGTGAACACCTAAGA"
+            lateinit var parsed: Either<IOError, SeqFile>
+            lateinit var seqFile: SeqFile
+            it("Should to parse the file [$file]") {
+                parsed = SeqParser.parse(file)
+            }
+
+            it("Should verify parsing resulted in IOError") {
+                parsed.should.be.of.type<Either.Right<SeqFile>>()
+            }
+
+            it("Should extract the SeqFile") {
+                val right = parsed
+                right as Either.Right
+                seqFile = right.b
+            }
+
+            it("Should verify the seqFile has 1 element") {
+                seqFile.size.should.equal(2)
+            }
+
+            it("Should verify the first validity"){
+                seqFile.first().body.should.be.of.type<SequenceChain.InvalidSequenceChain>()
+            }
+
+            it("Should verify the first description") {
+                seqFile.first().description.should.equal(">HSBGPG Human gene for bone gla protein (BGP)")
+            }
+            it("Should verify the first body") {
+                println(seqFile.first().body.chain)
+                seqFile.first().body.chain.should.equal("GGCAGA'T")
+            }
+
+            it("Should verify the first description") {
+                seqFile[1].description.should.equal(">HSGLTH1 Human theta 1-globin gene")
+            }
+
+            it("Should verify the first description") {
+                seqFile[1].body.chain.should.equal("CCACTGCACTCACCGCACCCGGCCAATTTTTGTGTTTTTAGTAGAGACTAAATACCATATAGTGAACACCTAAGA")
+            }
         }
         describe("Empty Second Body Fasta") {
-            TODO()
+            val file = ">HSBGPG Human gene for bone gla protein (BGP)\n\n>HSGLTH1 Human theta 1-globin gene\nCCACTGCACTCACCGCACCCGGCCAATTTTTGTGTTTTTAGTAGAGACTAAATACCATATAGTGAACACCTAAGA"
+            lateinit var parsed: Either<IOError, SeqFile>
+            lateinit var seqFile: SeqFile
+            it("Should to parse the file [$file]") {
+                parsed = SeqParser.parse(file)
+            }
+
+            it("Should verify parsing resulted in IOError") {
+                parsed.should.be.of.type<Either.Right<SeqFile>>()
+            }
+
+            it("Should extract the SeqFile") {
+                val right = parsed
+                right as Either.Right
+                seqFile = right.b
+            }
+
+            it("Should verify the seqFile has 1 element") {
+                seqFile.size.should.equal(2)
+            }
+
+            it("Should verify the first validity"){
+                seqFile[1].body.should.be.of.type<SequenceChain.EmptySequenceChain>()
+            }
+
+            it("Should verify the first description") {
+                seqFile.first().description.should.equal(">HSBGPG Human gene for bone gla protein (BGP)")
+            }
+
+            it("Should verify the first description") {
+                seqFile[1].description.should.equal(">HSGLTH1 Human theta 1-globin gene")
+            }
         }
     }
 })
