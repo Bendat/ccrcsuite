@@ -23,5 +23,4 @@ enum class Parameter(
     EC("-EC", true, false, { true }),
     Traj("-traj"),
     Hours("-hours"),
-
 }

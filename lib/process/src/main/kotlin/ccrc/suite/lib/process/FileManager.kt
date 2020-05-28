@@ -7,7 +7,6 @@ import arrow.core.Try
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.User
 import java.io.File
-
 class FileManager(path: String) {
     val folder = File(path)
     val processFolder = File(path, "processes")

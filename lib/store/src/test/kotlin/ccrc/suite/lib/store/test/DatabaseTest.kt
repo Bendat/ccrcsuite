@@ -3,6 +3,7 @@ package ccrc.suite.lib.store.test
 import arrow.core.None
 import arrow.core.Some
 import ccrc.suite.commons.*
+import ccrc.suite.commons.utils.uuid
 import ccrc.suite.lib.store.database.Database
 import ccrc.suite.lib.store.database.Database.PersistentDatabase
 import com.github.javafaker.Faker
@@ -14,17 +15,25 @@ import org.spekframework.spek2.Spek
 import java.io.File
 import java.util.*
 
-
+inline class A(val value: String)
+data class B(val a: A = A("A"), override val id: ID = ID(uuid)) : DBObject
 @Testable
 class DatabaseTest : Spek({
     val to by memoized { TestObject(ID(UUID.randomUUID()), "Paul Peterson") }
+    val db by memoized { Database.MemoryDatabase() }
+    test("Huur") {
+        val b = B()
+        println(db.insert(b))
+        val res = db.find<B>()
+        res.map { println(it.first { inner -> inner.id == b.id }) }
+    }
     group("In Memory Database Group") {
         val db by memoized { Database.MemoryDatabase() }
         test("Adding TestObject") {
             db.insert(to)
             val repo = db.size<TestObject>()
             repo.should.not.be.instanceof(None::class.java)
-            repo as Some<Long>
+            repo as Some
             repo.t.should.equal(1)
         }
 

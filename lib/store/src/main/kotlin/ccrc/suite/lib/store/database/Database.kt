@@ -7,7 +7,6 @@ import ccrc.suite.commons.DBObject
 import ccrc.suite.commons.ErrorHandler
 import ccrc.suite.commons.TrackingList
 import ccrc.suite.commons.User
-import ccrc.suite.commons.extensions.ifLeft
 import ccrc.suite.commons.logger.Logger
 import org.dizitart.kno2.filters.eq
 import org.dizitart.kno2.getRepository
@@ -43,9 +42,7 @@ sealed class Database : Logger, ErrorHandler<DBError> {
     }
 
     inline fun <reified TRepo : DBObject> context(op: ObjectRepository<TRepo>.() -> Unit) {
-        db.map { it.getRepository<TRepo>().apply(op) }.also {
-            db.map { i -> i.getRepository<TRepo>().close() }
-        }
+        db.map { it.getRepository<TRepo>().use(op) }
     }
 
     inline fun <reified TRepo : DBObject> update(obj: TRepo): Option<WriteResult> {
@@ -58,6 +55,12 @@ sealed class Database : Logger, ErrorHandler<DBError> {
 
     inline fun <reified T : Any> find(filter: () -> ObjectFilter): Option<Cursor<T>> {
         return db.map { it.getRepository<T>().find(filter()) }.also {
+            db.map { i -> i.getRepository<T>().close() }
+        }
+    }
+
+    inline fun <reified T : Any> find(): Option<Cursor<T>> {
+        return db.map { it.getRepository<T>().find() }.also {
             db.map { i -> i.getRepository<T>().close() }
         }
     }

@@ -101,7 +101,7 @@ class ProcessManagerTest : Spek({
             pm.run(id)
             safeWait(1000)
             val found2 = pm.find(id)
-            log.info{ "queues are [${pm.queues}]" }
+            log.info { "queues are [${pm.queues}]" }
             pm.queues[Completed]?.size.should.equal(1)
             (found2 is Some).should.be.`true`
             found2 as Some
@@ -139,7 +139,7 @@ class ProcessManagerTest : Spek({
             pm.waitFor(id)
             safeWait(1000)
             val found2 = pm.find(id)
-            log.info{ "queues are [${pm.queues}]" }
+            log.info { "queues are [${pm.queues}]" }
             pm.queues[Completed]?.size.should.equal(1)
             (found2 is Some).should.be.`true`
             found2 as Some
@@ -148,7 +148,10 @@ class ProcessManagerTest : Spek({
     }
 })
 
-private fun args() = listOf("perl", ArgNames.AutoFlush.toString())
+private fun args() = listOf(
+    ArgNames.Perl.value,
+    ArgNames.AutoFlush.toString()
+)
 
 
 private fun getRunner(id: UUID, state: ExecutionState = Queued): ProcessRunner {

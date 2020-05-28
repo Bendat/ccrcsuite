@@ -43,18 +43,18 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
         SimpleMapProperty<ExecutionState, ProcessQueue>(
             FXCollections.observableHashMap()
         ).apply {
-            ExecutionState.values().forEach { state ->
-                put(state, ProcessQueue())
-            }
+            ExecutionState::class.sealedSubclasses
+                .map { subclass -> subclass.objectInstance }
+                .forEach { state -> put(state, ProcessQueue()) }
         }
 
     val exitCodes = hashMapOf<UUID, Int>()
+
     inline operator fun <reified T : ProcessManager> invoke(op: (T) -> Unit): Boolean {
         return if (this is T) {
             op(this)
             true
         } else false
-
     }
 
     override fun write(p0: NitriteMapper?) = Document().apply {
@@ -118,25 +118,24 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
             .flatMap { q -> find(processId).map { q.remove(it) } }
     }
 
-    fun find(processId: UUID): Option<Wrapper> {
-        info { "Qeueus are [$queues]" }
-        return queues.toList().flatMap { it.second }
+    fun find(processId: UUID): Option<Wrapper> =
+        queues.toList().flatMap { it.second }
             .firstOrNull { it.runner.process.id == processId }
             .toOption()
-    }
 
     fun run(processId: UUID): Option<ProcessRunner> =
         queues.map { entry -> entry.value.firstOrNull { it.runner.process.id == processId } }
             .map { it?.runner?.start() }.firstOrNull().toOption()
 
-    fun pause(processId: UUID): Option<ProcessRunner> = find(processId).flatMap { it.runner.stop() }
+    fun pause(processId: UUID): Option<ProcessRunner> =
+        find(processId).flatMap { it.runner.stop() }
 
-    fun shutdown(onStopped: (PerlProcess) -> Unit = {}) {
+    fun shutdown(onStopped: (PerlProcess) -> Unit = {}) =
         queues.flatMap { it.value }.forEach {
             it.runner.stop()
             onStopped(it.runner.process)
         }
-    }
+
 
     @Synchronized
     internal operator fun set(priority: Int, state: ExecutionState, process: ProcessRunner) {
@@ -159,7 +158,9 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
     operator fun get(queue: ExecutionState, priority: Int): List<ProcessRunner> =
         queues[queue]?.filter { it.priority == priority }?.map { it.runner } ?: listOf()
 
-    operator fun get(queue: ExecutionState): ProcessQueue = queues[queue]!!
+    operator fun get(queue: ExecutionState): ProcessQueue =
+        queues[queue]!!
+
     operator fun get(queue: ExecutionState, process: ProcessRunner) =
         queues[queue]?.first { it.runner == process }.toOption()
 
@@ -210,6 +211,7 @@ open class ProcessManager(@Id override val id: ID = ID(uuid)) : Logger, Mappable
     }
 
     class StandardProcessManager(id: UUID = uuid) : ProcessManager(ID(id))
+
     class FXProcessManager(id: UUID = uuid) : ProcessManager(ID(id)) {
         val maxProperty = SimpleIntegerProperty(super.max)
         override var max by maxProperty

@@ -11,7 +11,6 @@ import ccrc.suite.lib.process.ExitCodes
 import ccrc.suite.lib.process.ITasserProcess
 import ccrc.suite.lib.process.ProcessRunner
 import com.winterbe.expekt.should
-import org.junit.platform.commons.annotation.Testable
 import org.spekframework.spek2.Spek
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
@@ -23,7 +22,6 @@ import kotlin.collections.ArrayList
 
 val log = object : Logger {}
 
-@Testable
 class ProcessRunnerTest : Spek({
     val os by memoized { LoggingAppender(UUID.randomUUID()) }
     val es by memoized { ErrorLoggingAppender(UUID.randomUUID()) }

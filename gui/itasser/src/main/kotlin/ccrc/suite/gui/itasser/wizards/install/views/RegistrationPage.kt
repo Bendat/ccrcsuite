@@ -39,9 +39,11 @@ class RegistrationPage : View("Create Admin Account"), Logger {
                     addClass("password")
                     validator{
                         val vldtr = text?.validPassword()
-                        if(vldtr is Invalid) error(vldtr.e.message.toString())
-                        else if( vldtr == null) error()
-                        else null
+                        when (vldtr) {
+                            is Invalid -> error(vldtr.e.message.toString())
+                            null -> error()
+                            else -> null
+                        }
                     }
                 }.required()
 

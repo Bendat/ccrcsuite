@@ -21,7 +21,7 @@ object SeqParser : Logger {
 
     fun parse(file: File): Either<IOError, SeqFile> {
         return if (!file.exists() || !file.isFile) {
-            Left(IOError.FileReadError(file, "File: exists[$${file.exists()}]; isFile[${file.isFile}]"))
+            Left(IOError.FileReadError(file, "File: exists[$${file.exists()}]; isFile[${file.isFile }]"))
         } else {
             SeqParser.parse(file.readLines())
         }

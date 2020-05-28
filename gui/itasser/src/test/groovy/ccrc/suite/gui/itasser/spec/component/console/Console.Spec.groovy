@@ -16,10 +16,6 @@ class ConsoleSpec extends GuiSpec {
 
     @Override
     void start(Stage stage) throws Exception {
-        System.setProperty("testfx.robot", "glass");
-        System.setProperty("testfx.headless", "true");
-        System.setProperty("prism.order", "sw");
-        System.setProperty("prism.text", "t2k");
         app = new ConsoleApp()
         FxToolkit.registerPrimaryStage()
         FxToolkit.setupFixture {

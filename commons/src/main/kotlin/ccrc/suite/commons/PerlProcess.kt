@@ -13,27 +13,27 @@ interface PerlProcess {
     var state: ExecutionState
     val seq: File
 
-    enum class ExecutionState {
-        Completed,
-        Paused,
-        Running,
-        Queued,
-        Failed;
+    sealed class ExecutionState {
+        object Completed : ExecutionState()
+        object Paused : ExecutionState()
+        object Running : ExecutionState()
+        object Queued : ExecutionState()
+        object Failed : ExecutionState()
 
         val isRunnable get() = this == Queued
     }
 
-    enum class ExitCode(val code: Int, val state: ExecutionState) : Logger{
+    enum class ExitCode(val code: Int, val state: ExecutionState) : Logger {
         OK(0, ExecutionState.Completed),
         CtrlC(130, ExecutionState.Paused),
         SigTerm(143, ExecutionState.Paused),
         SigKill(9, ExecutionState.Paused),
         Error(1, ExecutionState.Failed);
 
-        companion object: Logger {
+        companion object : Logger {
             fun fromInt(code: Int): ExitCode {
-                return values().first { it.code == code }.also{
-                    info{"Selecting ExitCode [$it] for [$code]"}
+                return values().first { it.code == code }.also {
+                    info { "Selecting ExitCode [$it] for [$code]" }
                 }
             }
         }

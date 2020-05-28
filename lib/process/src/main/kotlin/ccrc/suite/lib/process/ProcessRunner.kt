@@ -8,6 +8,7 @@ import ccrc.suite.commons.ErrorHandler
 import ccrc.suite.commons.PerlProcess
 import ccrc.suite.commons.TrackingList
 import ccrc.suite.commons.logger.Logger
+import javafx.beans.property.SimpleBooleanProperty
 import org.zeroturnaround.exec.ProcessExecutor
 import org.zeroturnaround.exec.ProcessResult
 import org.zeroturnaround.exec.StartedProcess
@@ -17,19 +18,22 @@ import org.zeroturnaround.process.ProcessUtil.destroyForcefullyAndWait
 import org.zeroturnaround.process.ProcessUtil.destroyGracefullyAndWait
 import org.zeroturnaround.process.Processes
 import org.zeroturnaround.process.SystemProcess
+import tornadofx.getValue
+import tornadofx.setValue
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
-
 @Suppress("UNUSED_EXPRESSION")
 class ProcessRunner(
-    val process: PerlProcess,
+    val process: ReactiveProcess,
     listener: ProcessListener
 ) : Logger, ErrorHandler<ProcessError> {
     override val errors = TrackingList<ProcessError>()
 
-    val state get() = process.state
-    val isRunnable get() = process.state.isRunnable
+    val isRunnableProperty = SimpleBooleanProperty(process.state.isRunnable)
+    var isRunnable by isRunnableProperty
+    var state by process.stateProperty
+
 
     var future: Option<Future<ProcessResult>> = None
 
@@ -60,7 +64,7 @@ class ProcessRunner(
     fun await(): Option<ProcessResult> = realProcess.flatMap { p ->
         Try { p.future.get() }
             .toEither()
-            .mapLeft { errors += Timeout("[${process.name}] timeoutd out", it) }
+            .mapLeft { errors += Timeout("[${process.name}] timed out", it) }
             .toOption()
     }
 
